@@ -56,6 +56,7 @@ usage() {
   --signer-fingerprint <SHA256:…>
                             обязательная сверка отпечатка ключа подписи релиза (die при расхождении или если
                             подпись проверить нельзя). Отпечаток — из README / независимого источника
+  --no-python-ppa           Ubuntu 22.04: не подключать deadsnakes PPA (python3.12); Python >= 3.11 поставить самому
   --force                   разрешить установку версии старее установленной (downgrade)
   --allow-unsigned          разрешить установку/повторную установку без проверяемой подписи релиза
                             (небезопасно: целостность без подлинности). Подписанные релизы проверяются всегда
@@ -74,7 +75,7 @@ SERVICE_KEY="${PM_SERVICE_KEY:-}" ; SERVICE_KEY_FILE=""
 OPERATOR_NAME="" ; OPERATOR_EMAIL="" ; OPERATOR_SITE="" ; OPERATOR_TERMS_URL="" ; OPERATOR_PRIVACY_URL=""
 ENABLE_UFW=0 ; SKIP_KEY_CHECK=0 ; LE_STAGING=0 ; NON_INTERACTIVE=0 ; RENDER_DIR=""
 SSL_CERT="" ; SSL_KEY="" ; ENV_WORK="" ; PREV_ENV=""
-CF_ONLY_443="" ; CF_ONLY_EXPLICIT=0 ; ALLOW_UNSIGNED=0 ; UNSIGNED_USED=0 ; SIGNER_FP="" ; FORCE=0
+CF_ONLY_443="" ; CF_ONLY_EXPLICIT=0 ; ALLOW_UNSIGNED=0 ; UNSIGNED_USED=0 ; SIGNER_FP="" ; FORCE=0 ; NO_PYTHON_PPA=0 ; PM_PYTHON=""
 unset PM_SERVICE_KEY
 
 need_arg() { [[ $# -ge 2 && -n "$2" ]] || die "Параметр $1 требует значение"; }
@@ -103,6 +104,7 @@ while [[ $# -gt 0 ]]; do
     --no-cf-only-443)   CF_ONLY_443=0; shift ;;
     --allow-unsigned)   ALLOW_UNSIGNED=1; shift ;;
     --force)            FORCE=1; shift ;;
+    --no-python-ppa)    NO_PYTHON_PPA=1; shift ;;
     --signer-fingerprint) need_arg "$@"; SIGNER_FP="$2"; shift 2
                         valid_fingerprint "$SIGNER_FP" || die "--signer-fingerprint: ожидается SHA256:<43 символа base64>" ;;
     --le-staging)       LE_STAGING=1; shift ;;
@@ -314,23 +316,19 @@ verify_package() {
 # ── Предполётная проверка ───────────────────────────────────────────────
 preflight() {
   print_header "Проверка системы"
-  local os_id="" os_ver="" py_ok=0 mem_kb=0
-  if [[ -r /etc/os-release ]]; then
-    # shellcheck disable=SC1091
-    os_id="$(. /etc/os-release; echo "${ID:-}")"
-    # shellcheck disable=SC1091
-    os_ver="$(. /etc/os-release; echo "${VERSION_ID:-}")"
-  fi
+  local os_id="" os_ver="" py_ok=0 mem_kb=0 py_cmd=""
+  pm_os_detect; os_id="$PM_OS_ID"; os_ver="$PM_OS_VER"
   case "${os_id}:${os_ver}" in
-    ubuntu:24.04) print_success "ОС: Ubuntu 24.04 (поддерживается)" ;;
+    ubuntu:22.04|ubuntu:24.04|ubuntu:26.04) print_success "ОС: Ubuntu ${os_ver} (поддерживается)" ;;
     debian:12)    print_warning "ОС: Debian 12 — не проверялась на хешах lock (Python 3.11); возможны отличия" ;;
     :)            print_warning "ОС не определена (проверка на macOS/без /etc/os-release — только для dry-run)" ;;
-    *)            if [[ "$DRY_RUN" == "1" ]]; then print_warning "ОС ${os_id} ${os_ver} не поддерживается (нужна Ubuntu 24.04)"; else
-                    die "ОС ${os_id} ${os_ver} не поддерживается: нужна Ubuntu 24.04 LTS (Debian 12 — best effort)"; fi ;;
+    *)            if [[ "$DRY_RUN" == "1" ]]; then print_warning "ОС ${os_id} ${os_ver} не поддерживается (нужна Ubuntu 22.04, 24.04 или 26.04)"; else
+                    die "ОС ${os_id} ${os_ver} не поддерживается: нужна Ubuntu 22.04, 24.04 или 26.04 LTS (Debian 12 — best effort)"; fi ;;
   esac
-  if have python3 && python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)'; then py_ok=1; fi
-  if [[ "$py_ok" == "1" ]]; then print_success "Python: $(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])')"; else
-    if [[ "$DRY_RUN" == "1" ]]; then print_warning "Нужен Python >= 3.11"; else die "Нужен Python >= 3.11 (Ubuntu 24.04 — python3.12)"; fi; fi
+  if py_cmd="$(pm_find_python)"; then py_ok=1; fi
+  if [[ "$py_ok" == "1" ]]; then print_success "Python: $("$py_cmd" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"; else
+    if [[ "$os_id" == "ubuntu" && "$NO_PYTHON_PPA" != "1" ]]; then print_info "Python < 3.11: на шаге «Пакеты» будет подключён deadsnakes PPA (python3.12)";
+    elif [[ "$DRY_RUN" == "1" ]]; then print_warning "Нужен Python >= 3.11"; else die "Нужен Python >= 3.11 (Ubuntu 22.04: python3.12 из deadsnakes; 24.04: python3.12)"; fi; fi
   if [[ -r /proc/meminfo ]]; then
     mem_kb="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
     (( mem_kb >= 900000 )) || print_warning "Мало памяти ($((mem_kb / 1024)) МБ): рекомендуется ≥ 1 ГБ (relay держит очереди в RAM)"
@@ -438,7 +436,8 @@ main() {
   else
     wait_for_apt_locks 600; DEBIAN_FRONTEND=noninteractive apt-get update -qq
   fi
-  apt_install ca-certificates curl openssl python3 python3-venv certbot
+  apt_install ca-certificates curl openssl python3 certbot
+  pm_ensure_python
   [[ "$TLS_MODE" == "cloudflare-dns" ]] && apt_install python3-certbot-dns-cloudflare
 
   relay_create_user

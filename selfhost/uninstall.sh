@@ -69,6 +69,11 @@ rm -f "$PM_NGINX_CONF" "${PM_NGINX_CONF}".bak.* /etc/letsencrypt/renewal-hooks/d
 if have nginx && nginx -t >/dev/null 2>&1; then systemctl reload nginx >/dev/null 2>&1 || true; fi
 # turnserver.conf удаляем только если это наш файл.
 if [[ "$OUR_TURN_CONF" == "1" ]]; then rm -f /etc/turnserver.conf /etc/turnserver.conf.bak.*; fi
+# deadsnakes PPA — только если его подключил установщик (метка в файле pinning).
+if grep -q "$PM_APT_MARK" "$PM_DEADSNAKES_PREFS" 2>/dev/null; then
+  rm -f "$PM_DEADSNAKES_PREFS" "$PM_DEADSNAKES_SOURCES" "$PM_DEADSNAKES_KEYRING"
+  print_info "deadsnakes PPA отключён (источник, pinning, keyring); пакеты python3.12 не удалены: apt remove python3.12 python3.12-venv — при необходимости"
+fi
 rm -rf "$PM_OPT"
 print_success "Конфиги и код удалены ($PM_OPT)"
 

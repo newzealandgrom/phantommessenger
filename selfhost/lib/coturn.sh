@@ -136,21 +136,36 @@ firewall_setup() {
       print_info "ufw не установлен. Откройте порты на своём файрволе/в панели VPS: ${rules[*]}"; return 0
     fi
   fi
-  local ssh_port r
-  ssh_port="$(sshd -T 2>/dev/null | awk '$1 == "port" {print $2; exit}')"
-  ssh_port="${ssh_port:-22}"
-  ufw allow "${ssh_port}/tcp" >/dev/null
+  local ssh_ports=() ssh_port r out
+  # Порты sshd: sshd -T (без «| awk …exit»: SIGPIPE под pipefail) + реально слушающие процессы sshd (ss).
+  out="$(sshd -T 2>/dev/null || true)"
+  while read -r ssh_port; do if [[ "$ssh_port" =~ ^[0-9]+$ ]]; then ssh_ports+=("$ssh_port"); fi; done < <(awk '$1 == "port" {print $2}' <<<"$out")
+  out="$(ss -Htlnp 2>/dev/null || true)"
+  while read -r ssh_port; do if [[ "$ssh_port" =~ ^[0-9]+$ ]]; then ssh_ports+=("$ssh_port"); fi; done \
+    < <(awk '/"sshd"/ {n = split($4, a, ":"); print a[n]}' <<<"$out")
+  if (( ${#ssh_ports[@]} == 0 )); then
+    if [[ "$ENABLE_UFW" == "1" ]]; then
+      die "Не удалось определить порт SSH (sshd -T и ss -tlnp ничего не дали): --enable-ufw мог бы закрыть доступ. Откройте порт вручную (ufw allow <порт>/tcp) и включите ufw сами"
+    fi
+    print_warning "Порт SSH не определён — разрешаю 22/tcp по умолчанию; проверьте перед ручным 'ufw enable'"
+    ssh_ports=(22)
+  fi
+  mapfile -t ssh_ports < <(printf '%s\n' "${ssh_ports[@]}" | sort -un)
+  ssh_port="${ssh_ports[*]}"
+  for r in "${ssh_ports[@]}"; do ufw allow "${r}/tcp" >/dev/null; done
   for r in "${rules[@]}"; do ufw allow "$r" >/dev/null; done
   if [[ "$CF_ONLY_443" == "1" ]]; then
     ufw --force delete allow 443/tcp >/dev/null 2>&1 || true
     ufw --force delete allow 443 >/dev/null 2>&1 || true
   fi
-  print_success "ufw: добавлены правила ${rules[*]} (+ ${ssh_port}/tcp)"
+  print_success "ufw: добавлены правила ${rules[*]} (+ ${ssh_port// /,}/tcp SSH)"
   if [[ "$ENABLE_UFW" == "1" ]]; then
     ufw --force enable >/dev/null
     print_success "ufw включён"
-  elif ufw status 2>/dev/null | grep -q inactive; then
+  elif [[ "$(ufw status 2>/dev/null || true)" == *inactive* ]]; then
     print_info "ufw выключен; правила сохранены. Включить: sudo ufw enable (убедитесь, что SSH-порт $ssh_port разрешён)"
-    [[ "$CF_ONLY_443" == "1" ]] && print_warning "Ограничение 443 до Cloudflare НЕ действует, пока ufw выключен"
+    # set -e: при CF_ONLY_443=0 «[[ ]] &&» вернул бы 1 и установщик молча завершился бы до запуска relay
+    if [[ "$CF_ONLY_443" == "1" ]]; then print_warning "Ограничение 443 до Cloudflare НЕ действует, пока ufw выключен"; fi
   fi
+  return 0
 }

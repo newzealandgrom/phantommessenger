@@ -68,6 +68,50 @@ bad("email с пробелом", { ...good, contactEmail: "a b@acme.example" });
 bad("email со скобкой", { ...good, contactEmail: "a(b)@acme.example" });
 bad("email > 200", { ...good, contactEmail: "a@" + "b".repeat(200) + ".com" });
 bad("email без TLD", { ...good, contactEmail: "a@localhost" });
+// ── C-1: Unicode по категориям (Cf/Co/Cs/Zl/Zp) в любом текстовом поле
+for (const [label, ch] of [["ZWSP U+200B", "\u200b"], ["RLO U+202E", "\u202e"], ["LRI U+2066", "\u2066"], ["WJ U+2060", "\u2060"],
+  ["ALM U+061C", "\u061c"], ["BOM U+FEFF", "\ufeff"], ["ZWJ U+200D", "\u200d"], ["private-use U+E000", "\ue000"],
+  ["одиночный суррогат", "\ud800"], ["U+2028", "\u2028"], ["C1 U+0085", "\u0085"]]) {
+  bad(`name с ${label}`, { ...good, name: `Acme${ch}Chat` });
+}
+bad("email с ZWSP", { ...good, contactEmail: "ops@acme\u200b.example" });
+bad("siteUrl с RLO в хосте", { ...good, siteUrl: "https://acme\u202e.example" });
+bad("termsUrl с ZWSP", { ...good, termsUrl: "https://acme.example/\u200bt" });
+check("эмодзи (пара суррогатов) и кириллица в имени допустимы", p({ ...good, name: "Фантом 😀" })?.name === "Фантом 😀");
+
+// ── C-2: размер тела до полной загрузки
+const mk = (chunks, headers = {}) => {
+  let i = 0, pulled = 0;
+  const stream = new ReadableStream({
+    pull(c) { if (i < chunks.length) { pulled++; c.enqueue(chunks[i++]); } else c.close(); },
+  });
+  return { resp: new Response(stream, { headers }), pulled: () => pulled };
+};
+const enc = new TextEncoder();
+const okBody = enc.encode(JSON.stringify(good));
+{
+  const { resp } = mk([okBody]);
+  check("тело в пределах — прочитано", (await O.readBodyLimited(resp, 4096)) === JSON.stringify(good));
+}
+{
+  const { resp, pulled } = mk(Array.from({ length: 200 }, () => new Uint8Array(1024)));
+  const r = await O.readBodyLimited(resp, 4096);
+  check("100+ КБ без Content-Length: отказ", r === null);
+  check("…с обрывом чтения (прочитано < 10 кусков из 200)", pulled() < 10);
+}
+{
+  const { resp, pulled } = mk([new Uint8Array(1024)], { "content-length": "102400" });
+  check("Content-Length 100 КБ: отказ без чтения тела", (await O.readBodyLimited(resp, 4096)) === null && pulled() === 0);
+}
+{
+  const { resp } = mk([okBody], { "content-length": "abc" });
+  check("Content-Length не число: отказ", (await O.readBodyLimited(resp, 4096)) === null);
+}
+{
+  const { resp } = mk([new Uint8Array([0xff, 0xfe])]);
+  check("невалидный UTF-8: отказ", (await O.readBodyLimited(resp, 4096)) === null);
+}
+check("кириллица считается в байтах (> 4096 Б при < 4096 символов)", O.parseOperatorBody(JSON.stringify({ ...good, pad: "я".repeat(2100) })) === null);
 check("тело > 4 КиБ отклонено", O.parseOperatorBody(JSON.stringify({ ...good, pad: "x".repeat(5000) })) === null);
 check("тело не JSON отклонено", O.parseOperatorBody("<!doctype html>") === null);
 check("тело JSON принято", O.parseOperatorBody(JSON.stringify(good)) !== null);

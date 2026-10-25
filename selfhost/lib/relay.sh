@@ -85,7 +85,7 @@ relay_install_venv() {
   print_header "Python-окружение (venv, --require-hashes)"
   local lock="$PM_OPT/requirements.lock" new_lock="$PM_OPT/requirements.lock.new" ts
   if [[ "$DRY_RUN" == "1" ]]; then
-    plan "python3 -m venv $PM_OPT/venv && venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements.lock"
+    plan "${PM_PYTHON:-python3} -m venv $PM_OPT/venv && venv/bin/python -m pip install --require-hashes --only-binary=:all: -r requirements.lock"
     return 0
   fi
   [[ -f "$new_lock" ]] || new_lock="$lock"
@@ -100,7 +100,7 @@ relay_install_venv() {
   fi
   ts="$(date +%Y%m%d-%H%M%S)"
   if [[ -d "$PM_OPT/venv" ]]; then mv "$PM_OPT/venv" "$PM_OPT/venv.bak.$ts"; fi
-  if ! python3 -m venv "$PM_OPT/venv" || \
+  if ! "${PM_PYTHON:-python3}" -m venv "$PM_OPT/venv" || \
      ! "$PM_OPT/venv/bin/python" -m pip install --no-cache-dir --disable-pip-version-check \
         --require-hashes --only-binary=:all: -r "$lock"; then
     print_error "Не удалось установить зависимости по хешам (pip). Возвращаю прежний venv."

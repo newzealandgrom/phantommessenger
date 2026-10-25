@@ -31,18 +31,23 @@ export const DEFAULT_OPERATOR: OperatorInfo = {
 const MAX_FIELD = 200;
 const MAX_BODY_BYTES = 4096;
 export const OPERATOR_FETCH_TIMEOUT_MS = 3000;
+export const OPERATOR_MAX_BODY_BYTES = MAX_BODY_BYTES;
 
 // Локальная часть + домен с точкой и TLD; без пробелов, скобок, кавычек и <>.
 const EMAIL_RE = /^[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,63}$/;
 // Символы, которые ломают разметку [текст](url) в legalContent или href.
 const URL_FORBIDDEN_RE = /[\s()<>"'`\\[\]{}|^]/;
-// Управляющие символы и разметка мини-языка legalContent ([ ] ( ) * `) в имени оператора.
-const NAME_FORBIDDEN_RE = /[\u0000-\u001f\u007f-\u009f[\]()*`<>\u2028\u2029]/;
+// Разметка мини-языка legalContent ([ ] ( ) * `) и теги в имени оператора.
+const NAME_FORBIDDEN_RE = /[[\]()*`<>]/;
+// Unicode по категориям, не списком: управляющие (Cc), форматирующие (Cf: U+200B-200F, U+202A-202E,
+// U+2060-2064, U+2066-2069, U+061C, U+FEFF…), private-use (Co), одиночные суррогаты (Cs), разделители строк/абзацев
+// (Zl/Zp). Любое такое поле негодно: иначе bidi-символами можно подменить вид имени/хоста в «О приложении».
+const FORBIDDEN_CATEGORY_RE = /[\p{Cc}\p{Cf}\p{Co}\p{Cs}\p{Zl}\p{Zp}]/u;
 
 function str(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const s = v.trim();
-  return s.length > 0 && s.length <= MAX_FIELD ? s : null;
+  return s.length > 0 && s.length <= MAX_FIELD && !FORBIDDEN_CATEGORY_RE.test(s) ? s : null;
 }
 
 /** Только `https:`, без userinfo, с хостом; возвращает исходную строку без хвостового «/». */
@@ -89,9 +94,40 @@ export function parseOperatorInfo(raw: unknown): OperatorInfo | null {
   return { name, siteUrl, contactEmail, termsUrl, privacyUrl, securityReport };
 }
 
+/** Читает тело ответа не более `max` байт. Content-Length > max → null без чтения; иначе чтение
+ *  потоком с обрывом (`reader.cancel()`) при превышении — большое тело не загружается целиком. */
+export async function readBodyLimited(r: Response, max: number): Promise<string | null> {
+  const cl = r.headers.get("content-length");
+  if (cl !== null) {
+    const n = Number(cl);
+    if (!Number.isFinite(n) || n < 0 || n > max) {
+      try { await r.body?.cancel(); } catch { /* уже закрыт */ }
+      return null;
+    }
+  }
+  if (!r.body) return null;
+  const reader = r.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) {
+      try { await reader.cancel(); } catch { /* уже закрыт */ }
+      return null;
+    }
+    chunks.push(value);
+  }
+  const all = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { all.set(c, off); off += c.byteLength; }
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(all); } catch { return null; }
+}
+
 /** Разбор тела ответа: лимит размера, JSON, схема. */
 export function parseOperatorBody(text: string): OperatorInfo | null {
-  if (text.length > MAX_BODY_BYTES) return null;
+  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) return null;
   try { return parseOperatorInfo(JSON.parse(text)); } catch { return null; }
 }
 
@@ -130,7 +166,8 @@ export function loadOperator(): Promise<OperatorInfo> {
       });
       // SPA-fallback relay отдаёт index.html с 200 — это «файла нет».
       if (r.ok && (r.headers.get("content-type") || "").toLowerCase().includes("json")) {
-        const parsed = parseOperatorBody(await r.text());
+        const text = await readBodyLimited(r, MAX_BODY_BYTES);
+        const parsed = text === null ? null : parseOperatorBody(text);
         if (parsed) result = parsed;
       }
     } catch {

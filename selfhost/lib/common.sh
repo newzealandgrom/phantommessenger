@@ -251,6 +251,146 @@ apt_install() {
   (umask 022; DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "$@")
 }
 
+# ── ОС и Python ─────────────────────────────────────────────────────────
+# Поддерживаемые Ubuntu LTS: 22.04, 24.04, 26.04. Relay нужен Python >= 3.11 (websockets 17 и др. из
+# requirements.lock требуют 3.11+; колёса с хешами есть для 3.11-3.14 — проверено pip download).
+# В 22.04 системный python3 = 3.10, поэтому ставится python3.12 из deadsnakes PPA (см. pm_ensure_python).
+PM_PY_MIN_MINOR=11
+PM_DEADSNAKES_PY="python3.12"
+
+# pm_os_detect → PM_OS_ID, PM_OS_VER (пусто, если /etc/os-release нет)
+pm_os_detect() {
+  PM_OS_ID=""; PM_OS_VER=""
+  if [[ -r /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    PM_OS_ID="$(. /etc/os-release; echo "${ID:-}")"
+    # shellcheck disable=SC1091
+    PM_OS_VER="$(. /etc/os-release; echo "${VERSION_ID:-}")"
+  fi
+}
+
+# pm_path_trusted <путь> — файл принадлежит root, не доступен на запись группе/всем, и так же каждый каталог
+# выше по реальному пути (защита от шима/подмены интерпретатора в каталоге, куда пишет не root).
+pm_path_trusted() {
+  local p="$1" real d own mode
+  real="$(readlink -f "$p" 2>/dev/null)" || return 1
+  [[ -n "$real" && -f "$real" ]] || return 1
+  d="$real"
+  while :; do
+    read -r own mode < <(stat -c '%u %a' "$d" 2>/dev/null) || return 1
+    [[ "$own" == "0" ]] || return 1
+    (( (8#$mode & 8#022) == 0 )) || return 1
+    [[ "$d" == "/" ]] && break
+    d="$(dirname "$d")"
+  done
+  return 0
+}
+
+# pm_find_python — печатает АБСОЛЮТНЫЙ путь интерпретатора >= 3.11 из /usr/bin (не по PATH: шим, pyenv, conda и
+# активированный venv игнорируются). Порядок: системный python3, затем python3.13/.12/.11.
+pm_find_python() {
+  local c
+  for c in /usr/bin/python3 /usr/bin/python3.13 /usr/bin/python3.12 /usr/bin/python3.11; do
+    [[ -x "$c" ]] || continue
+    pm_path_trusted "$c" || continue
+    if "$c" -I -c "import sys; sys.exit(0 if sys.version_info >= (3, $PM_PY_MIN_MINOR) else 1)" 2>/dev/null; then
+      echo "$c"; return 0
+    fi
+  done
+  return 1
+}
+
+# Отпечаток ключа подписи deadsnakes PPA (https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa). Сверяется ПОЛНОСТЬЮ.
+PM_DEADSNAKES_FPR="F23C5A6CF475977595C89F51BA6932366A755776"
+PM_DEADSNAKES_KEYRING="${PM_ROOT_PREFIX}/etc/apt/keyrings/deadsnakes.gpg"
+PM_DEADSNAKES_SOURCES="${PM_ROOT_PREFIX}/etc/apt/sources.list.d/deadsnakes.sources"
+PM_DEADSNAKES_PREFS="${PM_ROOT_PREFIX}/etc/apt/preferences.d/deadsnakes"
+PM_APT_MARK="Managed by phantom-selfhost"
+
+# pm_add_deadsnakes — подключает PPA без add-apt-repository: отдельный keyring (Signed-By, не trusted.gpg.d) с
+# проверкой полного отпечатка, deb822-источник и pinning (весь PPA 100, только python3.12*/libpython3.12* 500).
+# Файлы помечены "Managed by phantom-selfhost": uninstall.sh снимает только свои.
+pm_add_deadsnakes() {
+  local codename gh armor n
+  if [[ -f "$PM_DEADSNAKES_SOURCES" ]] && ! grep -q "$PM_APT_MARK" "$PM_DEADSNAKES_SOURCES"; then
+    print_info "deadsnakes уже подключён вручную ($PM_DEADSNAKES_SOURCES) — не меняю"; return 0
+  fi
+  # shellcheck disable=SC1091
+  codename="$( . "${PM_ROOT_PREFIX}/etc/os-release" 2>/dev/null; echo "${VERSION_CODENAME:-}" )"
+  if [[ ! "$codename" =~ ^[a-z]+$ && "$DRY_RUN" == "1" ]]; then codename="jammy"; fi
+  [[ "$codename" =~ ^[a-z]+$ ]] || die "Не удалось определить кодовое имя Ubuntu (VERSION_CODENAME)"
+  if [[ "$DRY_RUN" == "1" ]]; then
+    plan "apt-get install gnupg; ключ $PM_DEADSNAKES_FPR с keyserver.ubuntu.com (HTTPS) → временный GNUPGHOME, сверка ПОЛНОГО отпечатка (die при расхождении) → $PM_DEADSNAKES_KEYRING"
+    plan "$PM_DEADSNAKES_SOURCES (deb822, Suites: $codename, Signed-By: $PM_DEADSNAKES_KEYRING)"
+    plan "$PM_DEADSNAKES_PREFS: Pin-Priority 100 для всего PPA, 500 только для python3.12* libpython3.12*"
+    return 0
+  fi
+  apt_install gnupg
+  gh="$(mktemp -d)"; chmod 0700 "$gh"; armor="$gh/key.asc"
+  curl -fsS --proto '=https' --tlsv1.2 -m 30 -o "$armor" \
+    "https://keyserver.ubuntu.com/pks/lookup?op=get&options=mr&search=0x${PM_DEADSNAKES_FPR}" \
+    || { rm -rf "$gh"; die "Не удалось скачать ключ deadsnakes с keyserver.ubuntu.com"; }
+  GNUPGHOME="$gh" gpg --batch --quiet --import "$armor" 2>/dev/null || { rm -rf "$gh"; die "gpg не смог импортировать ключ deadsnakes"; }
+  n="$(GNUPGHOME="$gh" gpg --batch --with-colons --list-keys 2>/dev/null | grep -c '^pub:' || true)"
+  if [[ "$n" != "1" ]] || [[ "$(GNUPGHOME="$gh" gpg --batch --with-colons --list-keys 2>/dev/null | awk -F: '$1 == "fpr" {print $10; exit}')" != "$PM_DEADSNAKES_FPR" ]]; then
+    rm -rf "$gh"; die "Отпечаток ключа deadsnakes не совпал с ожидаемым $PM_DEADSNAKES_FPR (или в ответе лишние ключи) — PPA НЕ подключён"
+  fi
+  mkdir -p "$(dirname "$PM_DEADSNAKES_KEYRING")" "$(dirname "$PM_DEADSNAKES_SOURCES")" "$(dirname "$PM_DEADSNAKES_PREFS")"
+  GNUPGHOME="$gh" gpg --batch --export "$PM_DEADSNAKES_FPR" > "$gh/deadsnakes.gpg"
+  install -m 0644 -o root -g root "$gh/deadsnakes.gpg" "$PM_DEADSNAKES_KEYRING"
+  rm -rf "$gh"
+  cat > "$PM_DEADSNAKES_SOURCES" <<SRC
+# $PM_APT_MARK. Ключ сверен по отпечатку $PM_DEADSNAKES_FPR
+Types: deb
+URIs: https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu
+Suites: $codename
+Components: main
+Signed-By: $PM_DEADSNAKES_KEYRING
+SRC
+  cat > "$PM_DEADSNAKES_PREFS" <<PREF
+# $PM_APT_MARK: из PPA берутся только python3.12 и его библиотеки, остальное в PPA игнорируется
+Package: *
+Pin: release o=LP-PPA-deadsnakes
+Pin-Priority: 100
+
+Package: python3.12* libpython3.12*
+Pin: release o=LP-PPA-deadsnakes
+Pin-Priority: 500
+PREF
+  chmod 0644 "$PM_DEADSNAKES_SOURCES" "$PM_DEADSNAKES_PREFS"
+  print_success "deadsnakes PPA подключён (keyring $PM_DEADSNAKES_KEYRING, отпечаток сверен, pinning включён)"
+}
+
+# pm_ensure_python — гарантирует интерпретатор >= 3.11 с модулем venv; результат (абсолютный путь) в PM_PYTHON.
+# Ubuntu 22.04 (python3 = 3.10): python3.12 из deadsnakes PPA — стороннего репозитория, поэтому
+# отключается флагом --no-python-ppa (тогда установщик останавливается с инструкцией).
+pm_ensure_python() {
+  local py pkg
+  if py="$(pm_find_python)"; then
+    pkg="python3-venv"; [[ "$py" == "/usr/bin/python3" ]] || pkg="$(basename "$py")-venv"
+    apt_install "$pkg"
+    PM_PYTHON="$py"; print_info "Python для venv: $py"; return 0
+  fi
+  pm_os_detect
+  if [[ "$PM_OS_ID" != "ubuntu" ]]; then
+    [[ "$DRY_RUN" == "1" ]] || die "Нужен Python >= 3.11 в /usr/bin (не найден); поставьте python3.11+ и python3.11-venv"
+    PM_PYTHON="/usr/bin/python3"; return 0
+  fi
+  if [[ "${NO_PYTHON_PPA:-0}" == "1" ]]; then
+    die "Системный Python < 3.11, а --no-python-ppa запрещает deadsnakes PPA. Поставьте ${PM_DEADSNAKES_PY} и ${PM_DEADSNAKES_PY}-venv сами и запустите снова"
+  fi
+  print_warning "Python < 3.11 (Ubuntu ${PM_OS_VER}): подключаю deadsnakes PPA (сторонний репозиторий, ключ сверяется по отпечатку) ради ${PM_DEADSNAKES_PY}. Отказаться: --no-python-ppa"
+  pm_add_deadsnakes
+  if [[ "$DRY_RUN" == "1" ]]; then
+    plan "apt-get update; apt-get install ${PM_DEADSNAKES_PY} ${PM_DEADSNAKES_PY}-venv"
+    PM_PYTHON="/usr/bin/${PM_DEADSNAKES_PY}"; return 0
+  fi
+  wait_for_apt_locks 600; DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  apt_install "$PM_DEADSNAKES_PY" "${PM_DEADSNAKES_PY}-venv"
+  PM_PYTHON="$(pm_find_python)" || die "После установки ${PM_DEADSNAKES_PY} доверенный интерпретатор >= 3.11 в /usr/bin не найден"
+  print_info "Python для venv: $PM_PYTHON"
+}
+
 # ── Сеть ────────────────────────────────────────────────────────────────
 port_busy() {
   have ss || return 1

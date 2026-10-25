@@ -2,6 +2,19 @@
 
 ## Не выпущено
 
+- Ubuntu 22.04 / 24.04 / 26.04: определение ОС (`pm_os_detect`), выбор интерпретатора Python ≥ 3.11 (`pm_find_python`,
+  `pm_ensure_python` в `lib/common.sh`); на 22.04 (python3 = 3.10, а `requirements.lock` требует 3.11+) ставится `python3.12`
+  из deadsnakes PPA, флаг `--no-python-ppa` запрещает PPA. `requirements.lock` без изменений: хеши есть для CPython 3.11-3.14
+  (проверено `pip download --require-hashes`), на 26.04 / Python 3.14 relay и 5 офлайн-тестов проходят. `update.sh` пересоздаёт venv тем же интерпретатором.
+- Ревью SEC2: deadsnakes PPA подключается без `add-apt-repository`: ключ с keyserver.ubuntu.com по HTTPS проверяется по полному
+  отпечатку (`F23C5A6C…6A755776`, при расхождении die), keyring `/etc/apt/keyrings/deadsnakes.gpg` + `deadsnakes.sources` с `Signed-By`,
+  `/etc/apt/preferences.d/deadsnakes` (весь PPA 100, `python3.12*`/`libpython3.12*` 500); `uninstall.sh` снимает только то, что поставил установщик
+  (метка "Managed by phantom-selfhost"). Интерпретатор Python ищется по абсолютным путям `/usr/bin/python3*` (владелец root, без записи
+  группе/всем, включая каталоги выше), PATH/шимы/pyenv/venv игнорируются. `firewall_setup`: порты SSH из `sshd -T` и `ss -tlnp` (все);
+  если определить нельзя — с `--enable-ufw` установка останавливается, без него разрешается 22/tcp с предупреждением.
+- Исправлено: `firewall_setup` при выключенном ufw и `--cf-only-443` не заданном возвращал 1 (`[[ ]] &&` в конце функции) —
+  `set -e` молча обрывал установку до запуска relay; `sshd -T | awk …exit` под `pipefail` изредка давал 141 (SIGPIPE) и тоже обрывал установку.
+
 - Безопасность (ревью H3): в `/opt/.../selfhost` копируются только файлы релиза по `MANIFEST.sha256` (ключи рядом с
   архивом не попадают); подпись обязательна, если в установленном `allowed_signers` есть ключ (`--allow-unsigned` —
   явный опт-аут); якорь доверия берётся из установленного пакета; повторный `install.sh` проверяет манифест и подпись;

@@ -27,7 +27,7 @@ Russian version: [README.md](README.md)
 
 | | |
 |---|---|
-| OS | Ubuntu 24.04 LTS (Python 3.12). Debian 12 is untested. Ubuntu 22.04 is unsupported. |
+| OS | Ubuntu 22.04, 24.04 or 26.04 LTS. The relay needs Python ≥ 3.11: 24.04 (3.12) and 26.04 (3.14) use the system one; Ubuntu 22.04 is experimental: system Python 3.10 is too old, so the installer adds Python 3.12 from the deadsnakes PPA (key verified by its full fingerprint, dedicated `Signed-By` keyring, apt pinning: only `python3.12*` is taken from the PPA; `uninstall.sh` removes the PPA; opt out with `--no-python-ppa` and install Python ≥ 3.11 yourself). Verified on a live system: 26.04 only; 22.04 and 24.04 not yet. Debian 12 is untested. |
 | Resources | 1 vCPU, >= 1 GB RAM (2 GB better), 10 GB disk. amd64 primary, arm64 best effort. |
 | Host | a dedicated VPS: the installer takes ports 80/443 (nginx) and 3478/5349 (coturn) |
 | Domain | a subdomain such as `msg.example.com` (a subdomain is recommended: the server's HSTS covers nested names) and `turn.msg.example.com` for TURN |
