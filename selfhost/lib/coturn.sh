@@ -143,9 +143,18 @@ firewall_setup() {
   out="$(ss -Htlnp 2>/dev/null || true)"
   while read -r ssh_port; do if [[ "$ssh_port" =~ ^[0-9]+$ ]]; then ssh_ports+=("$ssh_port"); fi; done \
     < <(awk '/"sshd"/ {n = split($4, a, ":"); print a[n]}' <<<"$out")
+  # ssh.socket (Ubuntu >= 22.10): порт слушает systemd, ss его не видит, а Port из sshd_config игнорируется.
+  local unit
+  for unit in ssh.socket sshd.socket; do
+    if systemctl is-active --quiet "$unit" 2>/dev/null; then
+      out="$(systemctl show -p Listen "$unit" 2>/dev/null || true)"
+      while read -r ssh_port; do if [[ "$ssh_port" =~ ^[0-9]+$ ]]; then ssh_ports+=("$ssh_port"); fi; done \
+        < <(grep -oE ':[0-9]+ \((Stream|Datagram)\)' <<<"$out" | grep -oE '[0-9]+' || true)
+    fi
+  done
   if (( ${#ssh_ports[@]} == 0 )); then
     if [[ "$ENABLE_UFW" == "1" ]]; then
-      die "Не удалось определить порт SSH (sshd -T и ss -tlnp ничего не дали): --enable-ufw мог бы закрыть доступ. Откройте порт вручную (ufw allow <порт>/tcp) и включите ufw сами"
+      die "Не удалось определить порт SSH (sshd -T, ss -tlnp и ssh.socket ничего не дали): --enable-ufw мог бы закрыть доступ. Откройте порт вручную (ufw allow <порт>/tcp) и включите ufw сами"
     fi
     print_warning "Порт SSH не определён — разрешаю 22/tcp по умолчанию; проверьте перед ручным 'ufw enable'"
     ssh_ports=(22)

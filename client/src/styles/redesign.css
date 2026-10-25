@@ -976,7 +976,20 @@ body {
   font-weight: 700;
   color: var(--pm-text-95);
   font-family: var(--pm-font-mono);
+  /* <input>: display:flex не центрирует текст внутри поля — центрируем явно (Chrome/Firefox/Safari) */
+  text-align: center;
+  padding: 0;
+  box-sizing: border-box;
+  line-height: 1;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  caret-color: var(--pm-accent, #a78bfa);
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
 }
+.pm-otp-cell:focus { border-color: rgba(167, 139, 250, 0.8); }
+.pm-otp-cell:-webkit-autofill { -webkit-text-fill-color: var(--pm-text-95); transition: background-color 9999s; }
 
 .pm-otp-cell.filled {
   background: rgba(167, 139, 250, 0.12);

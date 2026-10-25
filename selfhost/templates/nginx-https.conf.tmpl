@@ -37,6 +37,19 @@ server {
         return 421;
     }
 
+    # Челлендж авторегистрации в сервисе номеров: ТОЛЬКО этот префикс и только файлы из отдельного каталога
+    # (листинга нет, в relay не проксируется, кэшировать нельзя). Файл создаётся на время регистрации и удаляется.
+    location = /.well-known/phantom-numbers/ {
+        return 404;
+    }
+    location ^~ /.well-known/phantom-numbers/ {
+        alias @@WELLKNOWN_ROOT@@/;
+        default_type text/plain;
+        autoindex off;
+        add_header Cache-Control "no-store" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:8444;
         proxy_http_version 1.1;

@@ -3,7 +3,8 @@
 #   scripts/build-selfhost-release.sh [--out DIR] [--version X.Y.Z] [--skip-client-build] [--sign-key FILE] [--allow-dirty]
 # Выход (DIR, по умолчанию ./dist-selfhost):
 #   phantom-selfhost-<ver>.tar.gz   — пакет (selfhost/ + app/{backend,client/dist,requirements.lock,scripts/turn_selftest.py})
-#   SHA256SUMS                      — контрольная сумма архива
+#   phantom-selfhost.tar.gz         — тот же архив под стабильным именем (для .../releases/latest/download/ и selfhost/get.sh)
+#   SHA256SUMS                      — контрольные суммы архива под обоими именами (одна подпись покрывает оба)
 #   SHA256SUMS.sig                  — подпись ssh-keygen -Y sign -n phantom-selfhost (если задан --sign-key)
 # В архив НЕ попадают: .env, data/, state.json, SECURITY_AUDIT.md, тесты, внутренняя документация, секреты.
 # Гейт: чистое git-дерево для backend/ client/ selfhost/ requirements.lock (PM_ALLOW_DIRTY=1 или --allow-dirty
@@ -25,7 +26,7 @@ while [[ $# -gt 0 ]]; do
     --skip-client-build) SKIP_BUILD=1; shift ;;
     --sign-key) [[ $# -ge 2 ]] || { echo "--sign-key требует значение" >&2; exit 2; }; SIGN_KEY="$2"; shift 2 ;;
     --allow-dirty) ALLOW_DIRTY=1; shift ;;
-    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     *) echo "Неизвестный параметр: $1" >&2; exit 2 ;;
   esac
 done
@@ -53,7 +54,9 @@ fi
 
 # ── Веб-клиент ──────────────────────────────────────────────────────────
 if [[ "$SKIP_BUILD" != "1" ]]; then
-  (cd client && npm ci && npm run build)
+  # --ignore-scripts: lifecycle-скрипты зависимостей не исполняются (сборка идёт на машине с ключом подписи, S4-6).
+  # esbuild/@swc/core берут нативный бинарник из optional-пакета @esbuild/<платформа>, @swc/core-<платформа> и без postinstall.
+  (cd client && npm ci --ignore-scripts && npm run build)
 fi
 [[ -f client/dist/index.html ]] || die "нет client/dist/index.html (соберите клиент без --skip-client-build)"
 
@@ -140,7 +143,11 @@ else
   (cd "$STAGE" && tar --owner=0 --group=0 --numeric-owner --no-recursion -cf - -T "$LIST") | gzip -n -9 > "$ARCHIVE"
 fi
 
-(cd "$OUT" && printf '%s  %s\n' "$(sha256_of "$ARCHIVE")" "$NAME.tar.gz" > SHA256SUMS)
+# Стабильное имя нужно get.sh (GitHub .../releases/latest/download/phantom-selfhost.tar.gz); install.sh/update.sh ищут
+# строку по имени версионного файла, get.sh - по стабильному: в SHA256SUMS обе строки с одним хешем.
+STABLE="$OUT/phantom-selfhost.tar.gz"
+cp -p "$ARCHIVE" "$STABLE"
+(cd "$OUT" && { printf '%s  %s\n' "$(sha256_of "$ARCHIVE")" "$NAME.tar.gz"; printf '%s  %s\n' "$(sha256_of "$STABLE")" "phantom-selfhost.tar.gz"; } > SHA256SUMS)
 
 if [[ -n "$SIGN_KEY" ]]; then
   rm -f "$OUT/SHA256SUMS.sig"

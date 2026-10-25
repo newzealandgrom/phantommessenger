@@ -91,8 +91,10 @@ if [[ -f "$PM_OPT/scripts/turn_selftest.py" && -x "$PYBIN" ]]; then
 else warn "turn_selftest.py недоступен — проверка TURN пропущена"; fi
 
 print_header "6. Ключ сервиса номеров"
+_xt="$-"; set +x      # bash -x не должен печатать ключ
 key="$(read_env_value NFT_NUMBERS_SERVICE_SECRET "$PM_ENV_FILE")"
-if [[ -z "$key" ]]; then warn "нет ключа в env (нужен root)"; else
+if [[ "$key" == "$PM_NO_KEY_PLACEHOLDER" ]]; then fail "ключ сервиса номеров не получен (вход по кодам не работает): sudo $PM_OPT/selfhost/install.sh --reregister"
+elif [[ -z "$key" ]]; then warn "нет ключа в env (нужен root)"; else
   # Заголовок — тот, что relay реально шлёт сервису (env), по умолчанию X-API-Key.
   hdr="$(read_env_value NFT_NUMBERS_SERVICE_SECRET_HEADER "$PM_ENV_FILE")"; hdr="${hdr:-$PM_SERVICE_KEY_HEADER}"
   code="$(printf 'header = "%s: %s"\n' "$hdr" "$key" | curl -sS -m 15 -o /dev/null -w '%{http_code}' -K - -H 'Content-Type: application/json' -X POST --data '{}' "${API_BASE}/api/verify-code" 2>/dev/null || echo 000)"
@@ -103,6 +105,8 @@ if [[ -z "$key" ]]; then warn "нет ключа в env (нужен root)"; else
     *) warn "сервис номеров: HTTP $code" ;;
   esac
 fi
+
+unset key; [[ "$_xt" != *x* ]] || set -x
 
 print_header "Итог"
 echo "PASS=$PASS WARN=$WARN FAIL=$FAIL"

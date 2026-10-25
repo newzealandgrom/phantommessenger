@@ -13,3 +13,6 @@ data/
 *.pem
 *.key
 .DS_Store
+# артефакты tsc -b (tsconfig.node.json) при сборке клиента
+client/vite.config.js
+client/vite.config.d.ts

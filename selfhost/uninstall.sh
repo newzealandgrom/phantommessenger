@@ -74,6 +74,7 @@ if grep -q "$PM_APT_MARK" "$PM_DEADSNAKES_PREFS" 2>/dev/null; then
   rm -f "$PM_DEADSNAKES_PREFS" "$PM_DEADSNAKES_SOURCES" "$PM_DEADSNAKES_KEYRING"
   print_info "deadsnakes PPA отключён (источник, pinning, keyring); пакеты python3.12 не удалены: apt remove python3.12 python3.12-venv — при необходимости"
 fi
+rm -rf "$PM_WELLKNOWN_ROOT"
 rm -rf "$PM_OPT"
 print_success "Конфиги и код удалены ($PM_OPT)"
 

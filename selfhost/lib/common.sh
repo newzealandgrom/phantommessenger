@@ -23,12 +23,18 @@ PM_USER_MARKER="${PM_ETC}/.created-user"
 PM_STATE_DIR="${PM_ROOT_PREFIX}/var/lib/phantom-messenger"
 PM_NGINX_CONF="${PM_ROOT_PREFIX}/etc/nginx/conf.d/phantom-messenger.conf"
 PM_ACME_ROOT="${PM_ROOT_PREFIX}/var/www/acme"
+# Челлендж авторегистрации в сервисе номеров: отдельный каталог (не state relay: тот 0700 phantom), отдаётся nginx.
+PM_WELLKNOWN_ROOT="${PM_ROOT_PREFIX}/var/www/phantom-wellknown"
+PM_CHALLENGE_PREFIX="/.well-known/phantom-numbers/"
 PM_LOCAL_URL="http://127.0.0.1:8444"
 [[ -z "$PM_TEST_ROOT" ]] || PM_LOCAL_URL="${PM_LOCAL_URL_TEST:-$PM_LOCAL_URL}"
 # Адрес сервиса номеров (коды входа). Владелец подтверждает перед выпуском релиза.
 PM_DEFAULT_API_BASE="https://phantomnumbers.org"
 # Заголовок ключа интеграции сервиса номеров (сервис отвечает 401 api_key_missing с подсказкой X-API-Key).
 PM_SERVICE_KEY_HEADER="X-API-Key"
+# Значение-заглушка NFT_NUMBERS_SERVICE_SECRET, пока ключа нет: relay в prod не стартует с пустым секретом.
+# Сервис номеров такой ключ отвергнет (401), вход по кодам не работает; при повторном запуске считается "ключа нет".
+PM_NO_KEY_PLACEHOLDER="no-service-key-registered"
 PM_KEEP_BACKUPS=3
 
 if [[ -t 1 ]]; then
@@ -116,6 +122,12 @@ valid_https_url() {
 }
 valid_https_base() {
   [[ ${#1} -le 200 ]] && [[ "$1" =~ ^https://[a-z0-9.-]+(:[0-9]{1,5})?$ ]]
+}
+# Адрес сервиса номеров: https://хост[:порт]. Только в тестовом режиме (PM_TEST_ROOT действует лишь для не-root)
+# допустим локальный мок http://127.0.0.1:<порт>; от root проверка не ослабляется.
+valid_api_base() {
+  valid_https_base "$1" && return 0
+  [[ -n "${PM_TEST_ROOT:-}" && ${#1} -le 40 && "$1" =~ ^http://127\.0\.0\.1:[0-9]{2,5}$ ]]
 }
 # Свободный текст (имя оператора): без управляющих символов, кавычек, бэкслэшей и $`, а также без
 # Unicode-категорий Cf (bidi U+202A-202E/2066-2069, zero-width, BOM, U+061C), Cs (суррогаты),
@@ -207,6 +219,7 @@ install_file() {
 
 # ── Файл env: чтение/запись без sed -i (одинаково на GNU и BSD) ─────────
 read_env_value() {
+  local -; set +x
   local key="$1" file="$2"
   [[ -f "$file" ]] || return 0
   awk -F= -v k="$key" '$1 == k {print substr($0, index($0, "=") + 1)}' "$file" | tail -n1
@@ -214,6 +227,7 @@ read_env_value() {
 
 # set_env <файл> <ключ> <значение> — значение без перевода строки.
 set_env() {
+  local -; set +x
   local file="$1" key="$2" value="$3" tmp
   [[ "$value" != *$'\n'* ]] || die "Значение $key содержит перевод строки"
   [[ "$key" =~ ^[A-Z][A-Z0-9_]*$ ]] || die "Недопустимое имя переменной: $key"
@@ -335,7 +349,7 @@ pm_add_deadsnakes() {
   if [[ "$n" != "1" ]] || [[ "$(GNUPGHOME="$gh" gpg --batch --with-colons --list-keys 2>/dev/null | awk -F: '$1 == "fpr" {print $10; exit}')" != "$PM_DEADSNAKES_FPR" ]]; then
     rm -rf "$gh"; die "Отпечаток ключа deadsnakes не совпал с ожидаемым $PM_DEADSNAKES_FPR (или в ответе лишние ключи) — PPA НЕ подключён"
   fi
-  mkdir -p "$(dirname "$PM_DEADSNAKES_KEYRING")" "$(dirname "$PM_DEADSNAKES_SOURCES")" "$(dirname "$PM_DEADSNAKES_PREFS")"
+  install -d -m 0755 "$(dirname "$PM_DEADSNAKES_KEYRING")" "$(dirname "$PM_DEADSNAKES_SOURCES")" "$(dirname "$PM_DEADSNAKES_PREFS")"
   GNUPGHOME="$gh" gpg --batch --export "$PM_DEADSNAKES_FPR" > "$gh/deadsnakes.gpg"
   install -m 0644 -o root -g root "$gh/deadsnakes.gpg" "$PM_DEADSNAKES_KEYRING"
   rm -rf "$gh"
@@ -359,6 +373,16 @@ Pin-Priority: 500
 PREF
   chmod 0644 "$PM_DEADSNAKES_SOURCES" "$PM_DEADSNAKES_PREFS"
   print_success "deadsnakes PPA подключён (keyring $PM_DEADSNAKES_KEYRING, отпечаток сверен, pinning включён)"
+}
+
+# pm_deadsnakes_pins_ok <apt-cache policy> <apt-cache policy python3.12>: у файлов PPA приоритет 100, а у
+# python3.12 из PPA - 500. Иначе (например, сменился Origin и o=LP-PPA-deadsnakes не совпал) PPA получил бы 500 на всё.
+pm_deadsnakes_pins_ok() {
+  local all="$1" one="$2"
+  grep -qE '^ +100 https://ppa\.launchpadcontent\.net/deadsnakes/' <<<"$all" || return 1
+  ! grep -qE '^ +(500|990|1000) https://ppa\.launchpadcontent\.net/deadsnakes/' <<<"$all" || return 1
+  grep -qE '^ +500 https://ppa\.launchpadcontent\.net/deadsnakes/' <<<"$one" || return 1
+  return 0
 }
 
 # pm_ensure_python — гарантирует интерпретатор >= 3.11 с модулем venv; результат (абсолютный путь) в PM_PYTHON.
@@ -386,6 +410,10 @@ pm_ensure_python() {
     PM_PYTHON="/usr/bin/${PM_DEADSNAKES_PY}"; return 0
   fi
   wait_for_apt_locks 600; DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  local pol_all pol_one
+  pol_all="$(apt-cache policy 2>/dev/null || true)"; pol_one="$(apt-cache policy "$PM_DEADSNAKES_PY" 2>/dev/null || true)"
+  pm_deadsnakes_pins_ok "$pol_all" "$pol_one" \
+    || die "Pinning deadsnakes не действует (ожидалось: PPA = 100, ${PM_DEADSNAKES_PY} = 500; проверьте apt-cache policy). Пакеты не ставлю. Уберите $PM_DEADSNAKES_SOURCES и $PM_DEADSNAKES_PREFS или поправьте Origin в pinning"
   apt_install "$PM_DEADSNAKES_PY" "${PM_DEADSNAKES_PY}-venv"
   PM_PYTHON="$(pm_find_python)" || die "После установки ${PM_DEADSNAKES_PY} доверенный интерпретатор >= 3.11 в /usr/bin не найден"
   print_info "Python для venv: $PM_PYTHON"

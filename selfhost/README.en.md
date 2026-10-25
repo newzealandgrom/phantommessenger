@@ -14,9 +14,9 @@ Russian version: [README.md](README.md)
   device keys and safety numbers will differ.
 - **No push notifications on your server.** FCM/APNs keys belong to the project owner and are not part of this
   package. Messages arrive while the app is open (active WebSocket) and from the offline queue on reconnect.
-- **Login codes go through the project owner's numbers service (Phantom Numbers, phantomnumbers.org).** You need an integration key (see
-  below). The service sees the number, request time, your integration name (= your server) and your relay's IP;
-  the number's owner sees a "login request from <your server>" message.
+- **Login codes go through the project owner's numbers service (Phantom Numbers, phantomnumbers.org).** The installer obtains the integration key by itself
+  (automatic registration, see below). The service sees the number, request time, your server domain and your relay's IP;
+  the number's owner sees a "login request from third-party server <your domain>" message.
 - **You are the operator.** Users trust you the way they trust the project on phantommessenger.org. See "What the
   operator can see".
 - **The host must be dedicated.** The installer fully manages nginx and coturn (it overwrites `/etc/turnserver.conf`), takes ports 80/443/3478/5349 and stops coturn on uninstall. Other sites or a TURN server on the same host are not supported.
@@ -32,19 +32,34 @@ Russian version: [README.md](README.md)
 | Host | a dedicated VPS: the installer takes ports 80/443 (nginx) and 3478/5349 (coturn) |
 | Domain | a subdomain such as `msg.example.com` (a subdomain is recommended: the server's HSTS covers nested names) and `turn.msg.example.com` for TURN |
 | Ports | 80/tcp, 443/tcp, 3478/tcp+udp, 5349/tcp, 49152-65535/udp - also open them at your VPS provider |
-| Key | an integration key for the numbers service (see "Numbers service key") |
+| Key | none needed: the installer registers the server with the numbers service itself (see "Numbers service key"); port 443 must be reachable from the internet |
 
-## Installation
+## Installation - one command
+
+On a fresh server (Ubuntu 22.04 / 24.04 / 26.04), as root or via `sudo`, with no flags:
+
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzealandgrom/phantommessenger/main/selfhost/get.sh)"
+```
+
+`get.sh` downloads the latest release, verifies its signature with the key built into it (fingerprint below) and its SHA-256, then runs
+`install.sh`, which **asks the questions itself**: domain, TLS mode, e-mail, operator name/e-mail/site - and asks you to confirm the plan. You
+do not enter a numbers service key. Flags (for automation) go after `--`, e.g. `... )" -- --non-interactive --domain msg.example.com --email you@example.com --tls letsencrypt`.
+To update, run the same command. Details and sample answers: the [main README](../README.md).
+`get.sh` itself is not signed - it is trusted via HTTPS to GitHub (branch `main`); the signature with the built-in key
+(fingerprint `SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY`) is verified on the release archive. If that is not enough, see [Manual installation](#manual-installation) below.
+
+## Manual installation
 
 ```bash
 tar xzf phantom-selfhost-X.Y.Z.tar.gz
 cd phantom-selfhost-X.Y.Z
 sudo ./install.sh --dry-run --non-interactive --domain msg.example.com --email you@example.com \
-  --tls letsencrypt --service-key-file /root/numbers.key \
+  --tls letsencrypt \
   --signer-fingerprint SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY   # print the plan, change nothing
 sudo ./install.sh                                                  # interactive
 sudo ./install.sh --non-interactive --domain msg.example.com --email you@example.com \
-  --tls letsencrypt --service-key-file /root/numbers.key \
+  --tls letsencrypt \
   --signer-fingerprint SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY      # unattended
 ```
 
@@ -82,7 +97,7 @@ token): the installer copies them into `/etc/phantom-messenger` (0600/0640), the
 (`shred -u file`). Only release files are copied into `/opt/phantom-messenger/selfhost`.
 
 Main flags (`./install.sh --help` lists all): `--domain`, `--tls letsencrypt|cloudflare-dns|cloudflare-origin|custom`,
-`--email`, `--service-key-file` (or `PM_SERVICE_KEY`; `--service-key` is visible in `ps`), `--cf-api-token-file`
+`--email`, `--service-key-file` (a manual key: disables automatic registration; or `PM_SERVICE_KEY`; `--service-key` is visible in `ps`), `--no-autoregister` (do not register; without a key the install ends with a warning and sign-in codes will not work), `--reregister` (register again: a new key, the old one stops working), `--cf-api-token-file`
 (Zone:DNS:Edit token, for `cloudflare-dns`), `--origin-cert`/`--origin-key` (for `cloudflare-origin` and `custom`),
 `--turn-host` (default `turn.<domain>`, **DNS-only**), `--external-ip`, `--api-base`, `--operator-name`,
 `--operator-email`, `--operator-site` (asked in the dialog; written to `operator.json`: shown on `/terms` and `/privacy` and in the iOS/macOS/Android apps connected to your server), `--operator-terms-url`/`--operator-privacy-url` (default `https://<domain>/terms`, `/privacy`), `--enable-ufw`, `--skip-key-check`,
@@ -114,11 +129,38 @@ inbound 443 to Cloudflare ranges with `--cf-only-443` (on by default for `cloudf
 
 ## Numbers service key
 
-Login codes are sent and verified by the project owner's numbers service. The integration key is issued manually
-by the owner (tell them your server domain and a contact). Rules: keep it only in `/etc/phantom-messenger/env`
-(0640 root:phantom); never put it in command arguments, repositories or logs; one key per server; HTTP `401/403`
-on sign-in means the key was revoked or replaced - request a new one and run
-`sudo ./install.sh --service-key-file <file>`. Request limits are set by the numbers service.
+Login codes are sent and verified by the project owner's numbers service. **By default the key is obtained automatically**: after
+the TLS certificate is issued the installer registers your server with the numbers service (like Let's Encrypt HTTP-01):
+
+1. it generates a one-time secret (32 random bytes; kept only in the installer's memory, never written to disk, process arguments or
+   logs) and sends the service its hash;
+2. it receives a token and publishes `https://<domain>/.well-known/phantom-numbers/<token>` (nginx serves only this prefix from a
+   dedicated directory `/var/www/phantom-wellknown`, uncached, never proxied to the relay);
+3. the numbers service downloads the file, confirms you own the domain and issues the key once; the file is removed immediately, the key
+   is written to `/etc/phantom-messenger/env` (0640 root:phantom) and never printed.
+
+**What the numbers service sees:** your server domain, the operator contact e-mail, software name and version
+(`phantom-messenger-selfhost`), the server IP (request source) and afterwards the numbers that codes are requested for and request
+times. It does not receive messages, chat contacts or keys.
+
+**Limits and blocking.** Your server is a third-party one: codes carry a "third-party server <domain>" note and strict limits apply
+(5 code requests/min and 30/h per domain, a shared cap for all third-party servers, at most 3 sender domains per number per day). The
+numbers service owner can list third-party servers and block a domain (and its subdomains): the key stops working and sign-in codes
+disappear. For a large server (higher limits) ask the owner for a regular key at admin@phantommessenger.org and pass it with
+`--service-key-file`.
+
+Rules:
+- the key lives only in `/etc/phantom-messenger/env`; never put it in command arguments, repositories or logs;
+- repeated `install.sh` and `update.sh` keep the key and do not register again; `--reregister` issues a new key (the old one is revoked);
+- if registration fails (registration disabled by the service - 503, registration rate limit 5/h per IP, the file could not be
+  fetched because of DNS/firewall/cache, domain blocked) the install still finishes and the relay starts, but sign-in codes will not
+  work; fix the cause and run `sudo ./install.sh --reregister` (same options);
+- in `cloudflare-*` modes add a Cache Rule "Bypass cache" for `/.well-known/phantom-numbers/*` (otherwise Cloudflare may serve the numbers
+  service a cached response);
+- domains on free hosting or DDNS (github.io, duckdns, etc.) are not accepted by the numbers service (`domain_not_allowed`) - use your own domain;
+- `--reregister` refuses when a manual key is installed (so it is not replaced by a key with the strict third-party limits); only `--force` overrides;
+- HTTP `401/403` on sign-in means the key was revoked, replaced or the domain is blocked - run `--reregister` or ask the owner;
+- `status.sh` shows the key source ("auto-registration" or "manual"), `selftest.sh` checks the key itself.
 
 ## What is installed
 

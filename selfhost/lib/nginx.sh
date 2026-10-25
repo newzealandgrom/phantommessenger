@@ -48,7 +48,7 @@ nginx_compose() {
       cf_line='proxy_set_header CF-Connecting-IP "";'
     fi
     render_template "$t/nginx-https.conf.tmpl" "$part" "DOMAIN=$DOMAIN" "SSL_CERT=$SSL_CERT" "SSL_KEY=$SSL_KEY" \
-      "TLS_MODE=$TLS_MODE" "LISTEN6_443=$l443" "STAPLING_LINE=$(nginx_stapling_line)" "CF_HEADER_LINE=$cf_line"
+      "TLS_MODE=$TLS_MODE" "WELLKNOWN_ROOT=$PM_WELLKNOWN_ROOT" "LISTEN6_443=$l443" "STAPLING_LINE=$(nginx_stapling_line)" "CF_HEADER_LINE=$cf_line"
     cat "$part" >> "$out"
   fi
   rm -f "$part"
@@ -58,10 +58,10 @@ nginx_prepare() {
   print_header "nginx"
   apt_install nginx
   if [[ "$DRY_RUN" == "1" ]]; then
-    plan "mkdir -p $PM_ACME_ROOT; убрать стандартный сайт nginx (sites-enabled/default), если это штатная ссылка"
+    plan "mkdir -p $PM_ACME_ROOT $PM_WELLKNOWN_ROOT; убрать стандартный сайт nginx (sites-enabled/default), если это штатная ссылка"
     return 0
   fi
-  install -d -m 0755 "$PM_ACME_ROOT"
+  install -d -m 0755 "$PM_ACME_ROOT" "$PM_WELLKNOWN_ROOT"
   # Штатный сайт Ubuntu слушает :80 default_server и отдаёт «Welcome to nginx» по IP.
   if [[ -L /etc/nginx/sites-enabled/default && "$(readlink /etc/nginx/sites-enabled/default)" == "/etc/nginx/sites-available/default" ]]; then
     rm -f /etc/nginx/sites-enabled/default

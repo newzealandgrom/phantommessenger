@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { RefObject } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronLeft, ChevronRight, MoreHorizontal, SquarePen,
   MessageSquare, Users, Settings as SettingsIcon, LogOut, X, ArrowRight,
@@ -675,7 +676,7 @@ export default function MenuPanel(props: MenuPanelProps) {
         </div>
 
         {showLogoutConfirm && (
-          <div className="tg-modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
+          createPortal(<div className="tg-modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
             <div className="tg-modal" onClick={e => e.stopPropagation()}>
               <div className="tg-modal-header"><h3>{t("set.logout.confirmTitle")}</h3></div>
               <div style={{ padding: "12px 24px" }}>
@@ -686,11 +687,11 @@ export default function MenuPanel(props: MenuPanelProps) {
                 <button onClick={() => { setShowLogoutConfirm(false); hardLogout(); }} className="tg-modal-btn primary" style={{ background: "linear-gradient(135deg,#fb7185,#f43f5e)" }}>{t("profile.row.logout")}</button>
               </div>
             </div>
-          </div>
+          </div>, document.body)
         )}
 
         {accountToRemove && (
-          <div className="tg-modal-overlay" onClick={() => setAccountToRemove("")}>
+          createPortal(<div className="tg-modal-overlay" onClick={() => setAccountToRemove("")}>
             <div className="tg-modal" data-testid="account-remove-confirm" onClick={e => e.stopPropagation()}>
               <div className="tg-modal-header"><h3>{t("accounts.removeTitle")}</h3></div>
               <div style={{ padding: "12px 24px" }}>
@@ -706,7 +707,7 @@ export default function MenuPanel(props: MenuPanelProps) {
                 >{t("accounts.logout")}</button>
               </div>
             </div>
-          </div>
+          </div>, document.body)
         )}
       </div>
     );
@@ -961,7 +962,7 @@ export default function MenuPanel(props: MenuPanelProps) {
             </div>
 
             {showLogoutConfirm && (
-              <div className="tg-modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
+              createPortal(<div className="tg-modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
                 <div className="tg-modal" onClick={e => e.stopPropagation()}>
                   <div className="tg-modal-header"><h3>{accounts.length > 1 ? t("set.sec.deleteAcc.confirmTitleMulti") : t("set.sec.deleteAcc.confirmTitle")}</h3></div>
                   <div style={{ padding: "12px 24px" }}>
@@ -972,11 +973,11 @@ export default function MenuPanel(props: MenuPanelProps) {
                     <button onClick={() => { setShowLogoutConfirm(false); deleteAccount(); }} className="tg-modal-btn primary" style={{ background: "linear-gradient(135deg,#fb7185,#f43f5e)" }}>{t("common.delete")}</button>
                   </div>
                 </div>
-              </div>
+              </div>, document.body)
             )}
 
             {showClearChatsConfirm && (
-              <div className="tg-modal-overlay" onClick={() => setShowClearChatsConfirm(false)}>
+              createPortal(<div className="tg-modal-overlay" onClick={() => setShowClearChatsConfirm(false)}>
                 <div className="tg-modal" onClick={e => e.stopPropagation()}>
                   <div className="tg-modal-header"><h3>{t("set.sec.clearChats.confirmTitle")}</h3></div>
                   <div style={{ padding: "12px 24px" }}>
@@ -987,7 +988,7 @@ export default function MenuPanel(props: MenuPanelProps) {
                     <button onClick={() => { setShowClearChatsConfirm(false); clearAllChats(); }} className="tg-modal-btn primary" style={{ background: "linear-gradient(135deg,#fb7185,#f43f5e)" }}>{t("set.sec.clearChats.confirmCta")}</button>
                   </div>
                 </div>
-              </div>
+              </div>, document.body)
             )}
           </div>
         </div>

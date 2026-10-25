@@ -16,6 +16,8 @@ source "$SCRIPT_DIR/lib/tls.sh"
 source "$SCRIPT_DIR/lib/nginx.sh"
 # shellcheck source=lib/coturn.sh
 source "$SCRIPT_DIR/lib/coturn.sh"
+# shellcheck source=lib/autoreg.sh
+source "$SCRIPT_DIR/lib/autoreg.sh"
 
 usage() {
   cat <<'USAGE'
@@ -25,8 +27,12 @@ usage() {
 Обязательные (в диалоге спрашиваются):
   --domain <имя>            домен сервера, например msg.example.com (A-запись → IP VPS)
   --tls <режим>             letsencrypt | cloudflare-dns | cloudflare-origin | custom
-  --service-key-file <ф>    файл с ключом интеграции сервиса номеров (рекомендуется)
-                            (также: переменная PM_SERVICE_KEY; --service-key <ключ> виден в ps — не рекомендуется)
+  --service-key-file <ф>    файл с ключом интеграции сервиса номеров (ручной ключ: приоритет над авторегистрацией;
+                            также переменная PM_SERVICE_KEY; --service-key <ключ> виден в ps — не рекомендуется)
+                            Без ключа установщик САМ регистрирует сервер в сервисе номеров (после выпуска TLS):
+                            домен подтверждается файлом /.well-known/phantom-numbers/<токен>, ключ ложится в env.
+  --no-autoregister         не регистрироваться автоматически (без ключа установка завершится с предупреждением)
+  --reregister              повторная регистрация: новый ключ, прежний перестаёт работать (ротация)
 
 Режимы TLS:
   letsencrypt               Let's Encrypt HTTP-01 (нужны :80 и A-запись домена на этот сервер)
@@ -71,8 +77,10 @@ USAGE
 
 DOMAIN="" ; EMAIL="" ; TLS_MODE="" ; TURN_HOST="" ; EXTERNAL_IP="" ; API_BASE=""
 CF_TOKEN_FILE="" ; CERT_SRC="" ; KEY_SRC=""
-SERVICE_KEY="${PM_SERVICE_KEY:-}" ; SERVICE_KEY_FILE=""
+{ SERVICE_KEY="${PM_SERVICE_KEY:-}"; } 2>/dev/null   # (stderr глушится: bash -x не должен печатать ключ)
+SERVICE_KEY_FILE=""
 OPERATOR_NAME="" ; OPERATOR_EMAIL="" ; OPERATOR_SITE="" ; OPERATOR_TERMS_URL="" ; OPERATOR_PRIVACY_URL=""
+NO_AUTOREGISTER=0 ; REREGISTER=0 ; KEY_SOURCE="" ; AUTOREG_NEEDED=0 ; AUTOREG_FAILED=0
 ENABLE_UFW=0 ; SKIP_KEY_CHECK=0 ; LE_STAGING=0 ; NON_INTERACTIVE=0 ; RENDER_DIR=""
 SSL_CERT="" ; SSL_KEY="" ; ENV_WORK="" ; PREV_ENV=""
 CF_ONLY_443="" ; CF_ONLY_EXPLICIT=0 ; ALLOW_UNSIGNED=0 ; UNSIGNED_USED=0 ; SIGNER_FP="" ; FORCE=0 ; NO_PYTHON_PPA=0 ; PM_PYTHON=""
@@ -100,6 +108,8 @@ while [[ $# -gt 0 ]]; do
     --operator-privacy-url) need_arg "$@"; OPERATOR_PRIVACY_URL="${2%/}"; shift 2 ;;
     --enable-ufw)       ENABLE_UFW=1; shift ;;
     --skip-key-check)   SKIP_KEY_CHECK=1; shift ;;
+    --no-autoregister)  NO_AUTOREGISTER=1; shift ;;
+    --reregister)       REREGISTER=1; shift ;;
     --cf-only-443)      CF_ONLY_443=1; CF_ONLY_EXPLICIT=1; shift ;;
     --no-cf-only-443)   CF_ONLY_443=0; shift ;;
     --allow-unsigned)   ALLOW_UNSIGNED=1; shift ;;
@@ -119,7 +129,7 @@ cloudflare_alias() { [[ "$TLS_MODE" == "cloudflare" ]] && TLS_MODE="cloudflare-o
 cloudflare_alias
 
 # Временные файлы с секретами (рабочая копия env, бэкап прежнего env) удаляются при любом выходе.
-cleanup() { rm -f "${ENV_WORK:-}" "${PREV_ENV:-}"; }
+cleanup() { rm -f "${ENV_WORK:-}" "${PREV_ENV:-}"; autoreg_cleanup_challenge; }
 trap cleanup EXIT
 
 have python3 || die "Не найден python3 (apt install python3): он нужен для проверок ввода и рендера шаблонов"
@@ -207,17 +217,32 @@ if [[ "$CF_ONLY_443" == "1" && "$TLS_MODE" != cloudflare-* ]]; then
   CF_ONLY_443=0
 fi
 
-# Ключ сервиса номеров: файл → переменная/флаг → прежний env → скрытый ввод.
-if [[ -n "$SERVICE_KEY_FILE" ]]; then
-  [[ -r "$SERVICE_KEY_FILE" ]] || die "Не читается файл ключа: $SERVICE_KEY_FILE"
-  SERVICE_KEY="$(tr -d '[:space:]' < "$SERVICE_KEY_FILE")"
-fi
-if [[ -z "$SERVICE_KEY" && -f "$PM_ENV_FILE" ]]; then
-  SERVICE_KEY="$(read_env_value NFT_NUMBERS_SERVICE_SECRET "$PM_ENV_FILE")"
-fi
-if [[ -z "$SERVICE_KEY" && "$NON_INTERACTIVE" != "1" && -t 0 ]]; then
-  read -r -s -p "Ключ интеграции сервиса номеров (ввод скрыт): " SERVICE_KEY || true; echo
-fi
+# Ключ сервиса номеров: файл → переменная/флаг (ручной) → прежний env (сохраняется, повторно не регистрируемся) →
+# иначе авторегистрация (если не отключена --no-autoregister).
+resolve_service_key() {
+  local -; set +x      # bash -x не должен печатать ключ
+  [[ "$NO_AUTOREGISTER" != "1" || "$REREGISTER" != "1" ]] || die "--no-autoregister и --reregister взаимоисключающие"
+  if [[ -n "$SERVICE_KEY_FILE" ]]; then
+    [[ -r "$SERVICE_KEY_FILE" ]] || die "Не читается файл ключа: $SERVICE_KEY_FILE"
+    SERVICE_KEY="$(tr -d '[:space:]' < "$SERVICE_KEY_FILE")"
+  fi
+  if [[ -n "$SERVICE_KEY" ]]; then
+    [[ "$REREGISTER" != "1" ]] || die "--reregister несовместим с ручным ключом (--service-key-file / PM_SERVICE_KEY)"
+    KEY_SOURCE="manual"
+  else
+    if [[ -f "$PM_ENV_FILE" ]]; then SERVICE_KEY="$(read_env_value NFT_NUMBERS_SERVICE_SECRET "$PM_ENV_FILE")"; fi
+    [[ "$SERVICE_KEY" != "$PM_NO_KEY_PLACEHOLDER" ]] || SERVICE_KEY=""
+    if [[ -n "$SERVICE_KEY" ]]; then
+      KEY_SOURCE="$(conf_get KEY_SOURCE)"; [[ -n "$KEY_SOURCE" && "$KEY_SOURCE" != none ]] || KEY_SOURCE="manual"
+      if [[ "$REREGISTER" == "1" && "$KEY_SOURCE" == "manual" && "$FORCE" != "1" ]]; then
+        die "--reregister заменил бы ВАШ ручной ключ ключом авторегистрации с жёсткими лимитами сторонних серверов. Если это нужно - добавьте --force; иначе оставьте ручной ключ"
+      fi
+    fi
+    if [[ "$REREGISTER" == "1" || ( -z "$SERVICE_KEY" && "$NO_AUTOREGISTER" != "1" ) ]]; then AUTOREG_NEEDED=1; fi
+    [[ -n "$SERVICE_KEY" ]] || KEY_SOURCE="none"
+  fi
+}
+resolve_service_key
 
 # ── Валидация (всё, что попадёт в конфиги) ──────────────────────────────
 valid_domain "$DOMAIN"            || die "Некорректный домен: '${DOMAIN}' (ожидается msg.example.com)"
@@ -228,9 +253,9 @@ valid_operator_name "$OPERATOR_NAME" || die "Имя оператора: 1-120 с
 valid_https_url "$OPERATOR_SITE"  || die "Адрес сайта оператора должен быть https://… (без пробелов и скобок, до 200 символов): '${OPERATOR_SITE}'"
 [[ -z "$OPERATOR_TERMS_URL" ]]   || valid_https_url "$OPERATOR_TERMS_URL"   || die "Некорректный --operator-terms-url: '${OPERATOR_TERMS_URL}'"
 [[ -z "$OPERATOR_PRIVACY_URL" ]] || valid_https_url "$OPERATOR_PRIVACY_URL" || die "Некорректный --operator-privacy-url: '${OPERATOR_PRIVACY_URL}'"
-valid_https_base "$API_BASE"      || die "Адрес сервиса номеров должен быть https://хост[:порт]: '${API_BASE}'"
+valid_api_base "$API_BASE"        || die "Адрес сервиса номеров должен быть https://хост[:порт]: '${API_BASE}'"
 [[ -n "$EXTERNAL_IP" ]] && { valid_ipv4 "$EXTERNAL_IP" || die "Некорректный --external-ip"; }
-[[ "$SERVICE_KEY" =~ ^[A-Za-z0-9_.:-]{1,200}$ ]] || die "Ключ сервиса номеров не задан или содержит недопустимые символы (--service-key-file / PM_SERVICE_KEY)"
+[[ -z "$SERVICE_KEY" || "$SERVICE_KEY" =~ ^[A-Za-z0-9_.:-]{1,200}$ ]] || die "Ключ сервиса номеров содержит недопустимые символы (--service-key-file / PM_SERVICE_KEY)"
 tls_validate_inputs
 
 # Файлы с ключами/токенами внутри каталога пакета: в /opt копируются только файлы релиза, но сами исходники
@@ -348,6 +373,16 @@ preflight() {
     print_warning "Внешний IP не определён (укажите --external-ip)"; fi
 }
 
+key_plan_text() {
+  if [[ "$AUTOREG_NEEDED" == "1" ]]; then
+    echo "авторегистрация сервера (домен, почта оператора, версия и IP сервера уйдут сервису номеров; коды — с пометкой «сторонний сервер», жёсткие лимиты)"
+  elif [[ -n "$SERVICE_KEY" ]]; then
+    case "$KEY_SOURCE" in selfhost) echo "авторегистрация (уже выдан, сохраняется)" ;; *) echo "ручной ключ" ;; esac
+  else
+    echo "нет (--no-autoregister): вход по кодам не заработает, пока не будет ключа"
+  fi
+}
+
 summary() {
   print_header "План"
   cat <<PLAN
@@ -355,6 +390,7 @@ summary() {
   TLS:              $TLS_MODE
   TURN-хост:        $TURN_HOST (только DNS-only)
   Сервис номеров:   $API_BASE
+  Ключ номеров:     $(key_plan_text)
   Оператор:         $OPERATOR_NAME <$OPERATOR_EMAIL>, $OPERATOR_SITE
   Условия/политика: ${OPERATOR_TERMS_URL:-https://${DOMAIN}/terms} , ${OPERATOR_PRIVACY_URL:-https://${DOMAIN}/privacy}
   Код:              $PM_OPT (root:root, только чтение), пользователь $PM_USER
@@ -374,7 +410,7 @@ save_conf() {
   {
     echo "# Параметры установки (без секретов). Читается install.sh/status.sh/selftest.sh/update.sh."
     echo "DOMAIN=$DOMAIN"; echo "TLS_MODE=$TLS_MODE"; echo "TURN_HOST=$TURN_HOST"; echo "EMAIL=$EMAIL"
-    echo "EXTERNAL_IP=$EXTERNAL_IP"; echo "API_BASE=$API_BASE"; echo "CF_ONLY_443=$CF_ONLY_443"
+    echo "EXTERNAL_IP=$EXTERNAL_IP"; echo "API_BASE=$API_BASE"; echo "KEY_SOURCE=${KEY_SOURCE:-none}"; echo "CF_ONLY_443=$CF_ONLY_443"
     echo "OPERATOR_NAME=$OPERATOR_NAME"; echo "OPERATOR_EMAIL=$OPERATOR_EMAIL"; echo "OPERATOR_SITE=$OPERATOR_SITE"
     echo "OPERATOR_TERMS_URL=$OPERATOR_TERMS_URL"; echo "OPERATOR_PRIVACY_URL=$OPERATOR_PRIVACY_URL"
     echo "INSTALLED_AT=$(date -u +%FT%TZ)"
@@ -392,7 +428,7 @@ cloudflare_checklist() {
   - запись $DOMAIN — проксируется (оранжевое облако); $TURN_HOST — DNS only (серое облако);
   - SSL/TLS → Overview → режим Full (strict);
   - Network → WebSockets: включено;
-  - Rules → Cache Rules: обход кэша (Bypass) для /api/*;
+  - Rules → Cache Rules: обход кэша (Bypass) для /api/* и для /.well-known/phantom-numbers/* (челлендж авторегистрации);
   - TLS 1.3 включён (SSL/TLS → Edge Certificates);
 $( if [[ "$CF_ONLY_443" == "1" ]]; then
      echo "  - ufw: 443/tcp открыт только для CIDR Cloudflare (--cf-only-443; нужен включённый ufw, список обновляет pm-cf-update.timer);"
@@ -414,6 +450,9 @@ next_steps() {
 Секреты лежат в ${PM_ENV_FILE} (0640 root:${PM_USER}) и в терминал не печатаются.
 Push-уведомлений на этом сервере нет (ключи FCM/APNs принадлежат владельцу приложения).
 DONE
+  if [[ "$AUTOREG_FAILED" == "1" ]]; then
+    printf '\n%s\n' "ВНИМАНИЕ: регистрация в сервисе номеров не выполнена (причина выше). Повторить: sudo ${PM_OPT}/selfhost/install.sh --reregister (те же параметры), либо запросить ключ вручную: admin@phantommessenger.org."
+  fi
   cloudflare_checklist
   if (( ${#KEY_SOURCES[@]} > 0 )); then
     printf '\nУдалите исходные файлы с секретами (копии установлены в %s, права 0600/0640):\n  shred -u' "$PM_ETC"
@@ -444,7 +483,13 @@ main() {
   relay_install_journald
   relay_install_app
   relay_install_venv
-  relay_check_service_key
+  # --reregister: прежний ключ заменит авторегистрация после выпуска TLS — заранее его не проверяем
+  # (отозванный или неверный старый ключ не должен прерывать перерегистрацию).
+  if [[ "$REREGISTER" == "1" ]]; then
+    print_info "Прежний ключ сервиса номеров не проверяется: --reregister выдаст новый после выпуска TLS"
+  else
+    relay_check_service_key
+  fi
   relay_build_env
   relay_write_operator
 
@@ -457,6 +502,22 @@ main() {
   nginx_apply https
   coturn_setup
   tls_install_hooks
+
+  # Авторегистрация: nginx уже отдаёт https (location челленджа), env собран, relay ещё не запущен.
+  if [[ "$AUTOREG_NEEDED" == "1" ]]; then
+    if relay_autoregister; then
+      if [[ "$DRY_RUN" != "1" ]]; then
+        autoreg_persist_key
+        SKIP_KEY_CHECK=0; relay_check_service_key
+      fi
+    else
+      AUTOREG_FAILED=1
+      if [[ -n "$SERVICE_KEY" ]]; then print_warning "Авторегистрация не удалась - установка продолжается с прежним ключом"
+      else print_warning "Авторегистрация не удалась - установка продолжается без ключа сервиса номеров (вход по кодам не заработает)"; fi
+    fi
+  elif [[ -z "$SERVICE_KEY" ]]; then
+    print_warning "Ключа сервиса номеров нет (--no-autoregister): коды входа не придут. Получить ключ: sudo ./install.sh --reregister (или вручную: admin@phantommessenger.org, затем --service-key-file)"
+  fi
 
   relay_commit_env
   relay_install_units

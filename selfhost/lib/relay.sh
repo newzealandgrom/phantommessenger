@@ -142,6 +142,7 @@ env_secret() {
 
 # Сборка env: рабочая копия → проверки → установка в /etc/phantom-messenger/env.
 relay_build_env() {
+  local -; set +x      # в env попадает ключ сервиса номеров: bash -x его не печатает
   print_header "Конфигурация (/etc/phantom-messenger/env)"
   ENV_WORK="$(mktemp)"
   chmod 0600 "$ENV_WORK"
@@ -174,7 +175,7 @@ relay_build_env() {
   set_env "$ENV_WORK" NFT_NUMBERS_API_BASE "$API_BASE"
   set_env "$ENV_WORK" NFT_NUMBERS_ALLOW_PRIVATE 0
   set_env "$ENV_WORK" NFT_NUMBERS_TLS_VERIFY 1
-  set_env "$ENV_WORK" NFT_NUMBERS_SERVICE_SECRET "$SERVICE_KEY"
+  set_env "$ENV_WORK" NFT_NUMBERS_SERVICE_SECRET "${SERVICE_KEY:-$PM_NO_KEY_PLACEHOLDER}"
   # Заголовок ключа сервиса номеров: X-API-Key (X-Service-Secret у сервиса — легаси).
   set_env "$ENV_WORK" NFT_NUMBERS_SERVICE_SECRET_HEADER "$PM_SERVICE_KEY_HEADER"
   # Только собственный STUN: сторонние серверы раскрывали бы им IP клиентов.
@@ -330,9 +331,15 @@ relay_start() {
 # Проверка ключа сервиса номеров: POST /api/verify-code с пустым телом.
 #   422 — ключ принят; 401/403 — ключ неверен/отозван; прочее — предупреждение.
 relay_check_service_key() {
+  local -; set +x
   print_header "Проверка ключа сервиса номеров"
   if [[ "$DRY_RUN" == "1" ]]; then
-    plan "POST ${API_BASE}/api/verify-code {} с заголовком ${PM_SERVICE_KEY_HEADER} (ключ — через stdin curl, не в argv) → ожидается 422"
+    if [[ -z "$SERVICE_KEY" ]]; then plan "проверка ключа - после авторегистрации"; else
+      plan "POST ${API_BASE}/api/verify-code {} с заголовком ${PM_SERVICE_KEY_HEADER} (ключ — через stdin curl, не в argv) → ожидается 422"; fi
+    return 0
+  fi
+  if [[ -z "$SERVICE_KEY" ]]; then
+    print_info "Ключа сервиса номеров пока нет (его выдаст авторегистрация или он не задан)"
     return 0
   fi
   if [[ "$SKIP_KEY_CHECK" == "1" ]]; then

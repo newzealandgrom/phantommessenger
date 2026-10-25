@@ -167,10 +167,11 @@ find "$PM_OPT/backend" -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/d
 
 if ! cmp -s "$NEW/app/requirements.lock" "$PM_OPT/requirements.lock"; then
   print_info "requirements.lock изменился — пересоздаю venv (--require-hashes)"
+  PY_BIN="$(pm_find_python)" || { print_error "Нет доверенного Python >= 3.11 в /usr/bin (владелец root, без записи группе/всем) для пересоздания venv. Поставьте python3.12 (Ubuntu 22.04: через install.sh / deadsnakes) и повторите"; rollback; }
   BK_VENV="$PM_OPT/venv.bak.$TS"
   mv "$PM_OPT/venv" "$BK_VENV"
   cp -a "$NEW/app/requirements.lock" "$PM_OPT/requirements.lock"
-  if ! "$(pm_find_python || echo python3)" -m venv "$PM_OPT/venv" || ! "$PM_OPT/venv/bin/python" -m pip install --no-cache-dir --disable-pip-version-check \
+  if ! "$PY_BIN" -m venv "$PM_OPT/venv" || ! "$PM_OPT/venv/bin/python" -m pip install --no-cache-dir --disable-pip-version-check \
        --require-hashes --only-binary=:all: -r "$PM_OPT/requirements.lock"; then
     print_error "pip не смог установить зависимости по хешам"
     rollback
