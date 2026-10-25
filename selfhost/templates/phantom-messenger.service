@@ -1,0 +1,23 @@
+# /etc/systemd/system/phantom-messenger.service — ставит selfhost/install.sh (не править руками: перезапишется).
+# Код: /opt/phantom-messenger (root:root, только чтение). Env: /etc/phantom-messenger/env (0640 root:phantom).
+# State: /var/lib/phantom-messenger (StateDirectory, 0700 phantom). TLS терминирует nginx.
+# ВАЖНО: в WorkingDirectory не должно быть .env — backend/config.py перезаписывает им окружение.
+[Unit]
+Description=PHANTOM Messenger relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=phantom
+Group=phantom
+WorkingDirectory=/opt/phantom-messenger
+EnvironmentFile=/etc/phantom-messenger/env
+ExecStart=/opt/phantom-messenger/venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8444 --log-level warning --no-access-log --proxy-headers --forwarded-allow-ips 127.0.0.1
+StateDirectory=phantom-messenger
+StateDirectoryMode=0700
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,54 @@
+
+# :443 — TLS, WebSocket (HTTP/1.1 upgrade) → relay на 127.0.0.1:8444.
+# Режим TLS: @@TLS_MODE@@. TLS 1.3 обязателен для iOS/macOS-клиентов — не отключайте.
+map $http_upgrade $pm_connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 443 ssl;
+    @@LISTEN6_443@@
+    server_name @@DOMAIN@@;
+
+    ssl_certificate     @@SSL_CERT@@;
+    ssl_certificate_key @@SSL_KEY@@;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    # Только AEAD-шифры с PFS, без CBC.
+    ssl_ciphers ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:pm_ssl:2m;
+    ssl_session_timeout 1h;
+    ssl_session_tickets off;
+    @@STAPLING_LINE@@
+
+    # Версию nginx в заголовке Server и страницах ошибок не показываем.
+    server_tokens off;
+
+    # IP и URI клиентов в логи nginx не пишем; в error.log — только crit.
+    access_log off;
+    error_log /var/log/nginx/phantom-messenger-error.log crit;
+
+    # /api/messages/send: payload до 1 МиБ + JSON.
+    client_max_body_size 2m;
+
+    # Иной Host (в том числе обращение по IP) — 421 без проксирования.
+    if ($host != "@@DOMAIN@@") {
+        return 421;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8444;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $pm_connection_upgrade;
+        proxy_set_header Host $host;
+        # TCP-пир (клиент или IP Cloudflare edge): uvicorn --proxy-headers ставит из него request.client.
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        @@CF_HEADER_LINE@@
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+}

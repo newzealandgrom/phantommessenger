@@ -1,0 +1,4954 @@
+/* ══════════════════════════════════════════════════════════════
+   Phantom Messenger — Dark Liquid Glass Design System
+   ══════════════════════════════════════════════════════════════ */
+
+/* Шрифты — src/fonts/fonts.css (свой сервер, WEB-19) */
+
+/* Generated design tokens — source of truth = design/tokens.json (sec.md §10.2).
+   Глобальные CSS переменные (--color-accent, --radius-md, --spacing-4 и т.д.)
+   доступны во всём styles.css.  Меняй tokens.json, потом запускай
+   `node scripts/generate-tokens.mjs`. */
+@import './styles/tokens.css';
+
+/* ── Theme variables (Dark — default) ── */
+
+:root,
+[data-theme="dark"] {
+  /* Core palette */
+  --void: #050510;
+  --glass: rgba(15,15,25,0.45);
+  --glass-mid: rgba(16,16,26,0.65);
+  --glass-strong: rgba(14,14,22,0.75);
+  --glass-hover: rgba(255,255,255,0.06);
+  --glass-subtle: rgba(255,255,255,0.03);
+
+  /* Text hierarchy — WCAG AA contrast ratios on --void background */
+  --text-1: rgba(255,255,255,0.92);
+  --text-2: rgba(255,255,255,0.70);
+  --text-3: rgba(255,255,255,0.48);
+
+  /* Accents */
+  --accent: #6ea8fe;
+  --accent-2: #a78bfa;
+  --accent-dim: rgba(110,168,254,0.10);
+
+  /* Semantic */
+  --green: #4ade80;
+  --danger: #fb7185;
+
+  /* Surfaces */
+  --border: rgba(255,255,255,0.06);
+  --shadow: rgba(0,0,0,0.4);
+  --overlay: rgba(0,0,0,0.6);
+  --scrollbar: rgba(255,255,255,0.06);
+  --read-color: #6ea8fe;
+
+  /* Bubbles */
+  --bubble-in-bg: rgba(255,255,255,0.04);
+  --bubble-in-border: rgba(255,255,255,0.06);
+  --bubble-out-bg: linear-gradient(135deg, rgba(100,110,220,0.20), rgba(140,100,200,0.14));
+  --bubble-out-border: transparent;
+
+  /* Glass effect tokens */
+  --glass-blur: blur(50px) saturate(1.3);
+  --glass-specular: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 35%);
+  --glass-shadow: inset 0 1px 1px rgba(255,255,255,0.12), inset 0 -1px 1px rgba(0,0,0,0.15), 0 12px 40px rgba(0,0,0,0.4);
+
+  /* Radii */
+  --r-xs: 8px;
+  --r-sm: 14px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-full: 9999px;
+
+  /* Legacy aliases */
+  --bg-0: var(--void);
+  --bg-1: var(--glass);
+  --bg-2: var(--glass-subtle);
+  --bg-3: var(--glass-hover);
+  --bg-4: rgba(255,255,255,0.08);
+  --sidebar-bg: var(--glass-mid);
+  --bubble-out-solid: var(--accent);
+}
+
+/* ── Light theme ── */
+
+[data-theme="light"] {
+  --void: #e8e4e0;
+  --glass: rgba(255,255,255,0.45);
+  --glass-mid: rgba(255,255,255,0.55);
+  --glass-strong: rgba(255,255,255,0.70);
+  --glass-hover: rgba(0,0,0,0.04);
+  --glass-subtle: rgba(0,0,0,0.02);
+
+  --text-1: rgba(0,0,0,0.90);
+  --text-2: rgba(0,0,0,0.68);
+  --text-3: rgba(0,0,0,0.50);
+
+  --accent: #5b4fc7;
+  --accent-2: #7c6dd8;
+  --accent-dim: rgba(91,79,199,0.10);
+
+  --green: #22c55e;
+  --danger: #e11d48;
+
+  --border: rgba(0,0,0,0.06);
+  --shadow: rgba(0,0,0,0.08);
+  --overlay: rgba(0,0,0,0.35);
+  --scrollbar: rgba(0,0,0,0.08);
+  --read-color: #5b4fc7;
+
+  --bubble-in-bg: rgba(255,255,255,0.50);
+  --bubble-in-border: rgba(0,0,0,0.06);
+  --bubble-out-bg: linear-gradient(135deg, rgba(91,79,199,0.22), rgba(124,109,216,0.16));
+  --bubble-out-border: transparent;
+
+  --glass-blur: blur(50px) saturate(1.2);
+  --glass-specular: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+  --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 35%);
+  --glass-shadow: inset 0 1px 1px rgba(255,255,255,0.6), inset 0 -1px 1px rgba(0,0,0,0.04), 0 12px 40px rgba(0,0,0,0.06);
+
+  --bg-0: var(--void);
+  --bg-1: var(--glass);
+  --bg-2: var(--glass-subtle);
+  --bg-3: var(--glass-hover);
+  --bg-4: rgba(0,0,0,0.06);
+  --sidebar-bg: var(--glass-mid);
+  --bubble-out-solid: var(--accent);
+}
+
+/* ── Reset & base ── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--void);
+  color: var(--text-1);
+  font-family: var(--font-body, 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background var(--motion-slow, 350ms) ease, color var(--motion-slow, 350ms) ease;
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button { cursor: pointer; }
+
+a { color: var(--accent); text-decoration: none; }
+
+/* ── App root — scene background with mesh + animated orbs ── */
+
+.app-root {
+  height: 100vh;
+  height: 100dvh;
+  overflow: clip;
+  position: relative;
+  background:
+    radial-gradient(ellipse at 25% 45%, rgba(35,20,80,0.4), transparent 55%),
+    radial-gradient(ellipse at 75% 25%, rgba(15,30,100,0.3), transparent 55%),
+    radial-gradient(ellipse at 55% 80%, rgba(60,15,40,0.25), transparent 55%),
+    radial-gradient(ellipse at 35% 15%, rgba(20,40,70,0.2), transparent 55%),
+    var(--void);
+}
+
+[data-theme="light"] .app-root {
+  background:
+    radial-gradient(ellipse at 25% 45%, rgba(120,100,180,0.15), transparent 55%),
+    radial-gradient(ellipse at 75% 25%, rgba(100,120,200,0.12), transparent 55%),
+    radial-gradient(ellipse at 55% 80%, rgba(180,100,140,0.1), transparent 55%),
+    radial-gradient(ellipse at 35% 15%, rgba(100,140,180,0.08), transparent 55%),
+    var(--void);
+}
+
+/* Animated orb 1 */
+.app-root::before {
+  content: '';
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  border-radius: 50%;
+  background: rgba(60,40,130,0.5);
+  filter: blur(90px);
+  opacity: 0.25;
+  top: -10%;
+  left: 20%;
+  animation: drift 22s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Animated orb 2 */
+.app-root::after {
+  content: '';
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  background: rgba(40,60,160,0.5);
+  filter: blur(90px);
+  opacity: 0.25;
+  bottom: -10%;
+  right: 25%;
+  animation: drift 22s ease-in-out infinite alternate-reverse;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] .app-root::before {
+  background: rgba(140,120,200,0.4);
+  opacity: 0.2;
+}
+
+[data-theme="light"] .app-root::after {
+  background: rgba(120,140,220,0.4);
+  opacity: 0.2;
+}
+
+@keyframes drift {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, 40px) scale(1.05); }
+}
+
+/* ── Focus styles ── */
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(110,168,254,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(110,168,254,0.1);
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+  border-color: rgba(91,79,199,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(91,79,199,0.1);
+}
+
+/* ── Scrollbar ── */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(128,128,128,0.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Auth screens
+   ══════════════════════════════════════════════════════════════ */
+
+.auth-shell {
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card {
+  width: min(440px, 100%);
+  position: relative;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  box-shadow: var(--glass-shadow);
+  animation: cardIn var(--motion-card-enter, 500ms) cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.auth-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-shine);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.brand h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.03em; font-family: var(--font-display, var(--font-body)); }
+.brand p { margin: 4px 0 0; color: var(--text-2); font-size: 13px; }
+
+.brand-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: white;
+  font-size: 18px;
+  box-shadow: 0 4px 16px rgba(110,168,254,0.25);
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+.auth-form label { font-size: 13px; color: var(--text-2); font-weight: 500; }
+
+.auth-form input,
+.otp-grid input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  background: var(--glass-subtle);
+  color: var(--text-1);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.auth-form button,
+.secondary-btn {
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  /* Touch target — минимум 48px (sec.md §10.3 / §10.8).
+     Раньше 46px, что меньше WCAG AAA / Material recommended. */
+  min-height: 48px;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-form button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  pointer-events: none;
+}
+
+.auth-form button:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+.auth-form button:active:not(:disabled) { transform: scale(0.97); }
+.auth-form button:disabled { opacity: 0.45; cursor: default; }
+
+.secondary-btn {
+  background: var(--glass-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+}
+
+.otp-block { gap: 14px; }
+.otp-hint { margin: 0; font-size: 13px; color: var(--text-2); }
+
+.otp-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(44px, 1fr));
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.otp-grid input {
+  text-align: center;
+  padding-inline: 0;
+  font-size: 20px;
+  min-height: 48px;
+  font-weight: 600;
+  border-radius: var(--r-xs);
+}
+
+.otp-footer {
+  display: flex;
+  justify-content: center;
+  min-height: 20px;
+  font-size: 13px;
+  color: var(--text-2);
+  position: relative;
+  z-index: 2;
+}
+
+.link-btn {
+  border: none;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px 4px;
+  font-weight: 500;
+}
+
+.error-msg {
+  margin-top: 12px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+  position: relative;
+  z-index: 2;
+}
+
+.ext-warning {
+  position: relative;
+  z-index: 2;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  background: rgba(255, 180, 0, 0.08);
+  border: 1px solid rgba(255, 180, 0, 0.2);
+  margin-bottom: 10px;
+}
+
+.ext-warning p {
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.ext-warning .link-btn {
+  font-size: 11px;
+  padding: 0;
+  color: var(--text-2);
+  opacity: 0.8;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Main layout — Telegram-style two-panel
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  grid-template-rows: 1fr;
+  height: 100vh;
+  height: 100dvh;
+  overflow: clip;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Root ── */
+
+.tg-root {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  grid-template-rows: 1fr;
+  height: 100vh;
+  height: 100dvh;
+  overflow: clip;
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Sidebar — glass-mid panel
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-mid);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--border);
+  height: 100%;
+  min-height: 0;
+  overflow: clip;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  will-change: transform;
+  box-shadow: var(--glass-shadow);
+}
+
+.tg-sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tg-sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-shine);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tg-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 56px;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+.tg-menu-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 20px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.2s cubic-bezier(0.4,0,0.2,1), color 0.2s;
+}
+
+.tg-menu-btn:hover {
+  background: var(--glass-hover);
+  color: var(--text-1);
+}
+
+.tg-sidebar-profile-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.tg-sidebar-profile-btn:hover {
+  box-shadow: 0 0 0 3px var(--accent-dim), 0 2px 8px rgba(0,0,0,0.3);
+  transform: scale(1.05);
+}
+
+.tg-logo-link {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-1);
+  text-decoration: none;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.03em;
+}
+
+.tg-conn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tg-conn-dot.online { background: var(--green); box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+.tg-conn-dot.connecting { background: #f59e0b; animation: pulse 1s infinite; }
+.tg-conn-dot.offline { background: var(--text-3); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* ── Search ── */
+
+.tg-search-wrap {
+  position: relative;
+  padding: 8px 14px;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.tg-search-icon {
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.tg-search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  padding: 9px 14px 9px 38px;
+  background: var(--glass-subtle);
+  color: var(--text-1);
+  font-size: 13px;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.tg-search-input::placeholder { color: var(--text-3); }
+
+.tg-search-input:focus {
+  background: rgba(255,255,255,0.04);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Tabs (Direct / Groups / Calls)
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.tg-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 8px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.tg-tab:hover {
+  color: var(--text-2);
+  background: var(--glass-hover);
+}
+
+.tg-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tg-tab svg { flex-shrink: 0; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Chat list
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-chat-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  position: relative;
+  z-index: 1;
+}
+
+.tg-empty-chats {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+.tg-chat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.2s cubic-bezier(0.4,0,0.2,1);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  border-left: 3px solid transparent;
+}
+
+.tg-chat-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.tg-chat-item:hover { background: rgba(110,168,254,0.04); }
+.tg-chat-item:active::after { opacity: 0.05; }
+
+.tg-chat-item.active {
+  background: rgba(110,168,254,0.08);
+  border-left-color: var(--accent);
+}
+
+.tg-chat-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.tg-chat-avatar.small { width: 38px; height: 38px; font-size: 13px; }
+.tg-chat-avatar.header { width: 40px; height: 40px; font-size: 14px; }
+
+/* Online indicator on avatar */
+.tg-chat-avatar .tg-status-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(16,16,26,0.65);
+}
+
+.tg-chat-avatar .tg-status-badge.online {
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(74,222,128,0.5);
+}
+.tg-chat-avatar .tg-status-badge.offline { background: var(--text-3); }
+
+.tg-chat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tg-chat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.tg-chat-name {
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-1);
+}
+
+.tg-chat-time {
+  font-size: 11px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  font-weight: 400;
+}
+
+.tg-chat-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.tg-chat-preview {
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.draft-label {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.tg-unread-badge {
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FAB — Floating action button
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-fab-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+}
+
+.tg-fab-wrap {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 7;
+}
+
+.tg-fab-menu {
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px;
+  box-shadow: var(--glass-shadow);
+  min-width: 190px;
+  animation: fabMenuIn 0.15s cubic-bezier(0.4,0,0.2,1);
+  transform-origin: bottom right;
+  will-change: transform, opacity;
+  position: relative;
+  overflow: hidden;
+}
+
+.tg-fab-menu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes fabMenuIn {
+  from { opacity: 0; transform: scale(0.88) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.tg-fab-menu button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-fab-menu button:hover { background: var(--glass-hover); }
+
+.tg-fab-menu button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.tg-fab {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 20px rgba(110,168,254,0.35);
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), box-shadow 0.2s;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.tg-fab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  pointer-events: none;
+}
+
+.tg-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px rgba(110,168,254,0.5);
+}
+
+.tg-fab:active { transform: scale(0.97); }
+
+.tg-fab svg {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.2s ease;
+}
+
+.tg-fab.active svg {
+  transform: rotate(45deg);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Slide-over menu panel — glass-strong
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 200;
+  display: flex;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: overlayFadeIn 0.2s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tg-menu-panel {
+  width: 340px;
+  max-width: 85vw;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  animation: slideInLeft 0.28s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.tg-menu-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  z-index: 2;
+  pointer-events: none;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.tg-menu-profile-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 18px 20px;
+  background: linear-gradient(135deg, rgba(110,168,254,0.08), rgba(167,139,250,0.04));
+  flex-shrink: 0;
+}
+
+.tg-menu-profile-block .tg-profile-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.tg-menu-profile-block .tg-profile-avatar:hover {
+  box-shadow: 0 0 0 3px var(--accent-dim), 0 4px 16px rgba(0,0,0,0.3);
+  transform: scale(1.04);
+}
+
+.tg-menu-profile-block .tg-profile-number {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.tg-menu-profile-block .tg-profile-status {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.tg-profile-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.tg-profile-actions .link-btn {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.tg-profile-actions .link-btn:hover {
+  opacity: 0.8;
+}
+
+.tg-menu-nav {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tg-menu-nav button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  padding: 12px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.tg-menu-nav button:hover { background: var(--glass-hover); }
+.tg-menu-nav button.active { background: var(--accent-dim); color: var(--accent); }
+.tg-menu-nav button.danger { color: var(--danger); }
+.tg-menu-nav button svg { width: 20px; height: 20px; flex-shrink: 0; }
+.tg-menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+.tg-menu-content { padding: 18px; flex: 1; overflow-y: auto; }
+.tg-menu-content h3 { margin: 0 0 12px; font-size: 16px; font-weight: 600; letter-spacing: -0.03em; }
+.tg-menu-hint { color: var(--text-2); font-size: 13px; margin: 0 0 12px; }
+
+.tg-menu-footer {
+  margin-top: auto;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tg-menu-footer button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  padding: 12px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tg-menu-footer button:hover { background: var(--glass-hover); }
+.tg-menu-footer button svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* New chat row */
+
+.tg-newchat-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.tg-newchat-row input {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  background: var(--glass-subtle);
+  color: var(--text-1);
+}
+
+.tg-newchat-row button {
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 10px 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.1s;
+}
+
+.tg-newchat-row button:hover:not(:disabled) { filter: brightness(1.1); }
+.tg-newchat-row button:active:not(:disabled) { transform: scale(0.97); }
+.tg-newchat-row button:disabled { opacity: 0.4; cursor: default; }
+
+/* Contacts */
+
+.tg-menu-contacts-quick { margin-top: 16px; }
+
+.tg-contact-quick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tg-contact-quick:hover { background: var(--glass-hover); }
+.tg-contact-name { font-size: 13px; font-weight: 600; }
+.tg-contact-num { font-size: 11px; color: var(--text-3); }
+
+.tg-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  margin-bottom: 2px;
+}
+
+.tg-contact-info { flex: 1; cursor: pointer; }
+.tg-contact-info strong { display: block; font-size: 13px; }
+.tg-contact-info small { color: var(--text-3); font-size: 11px; }
+
+.tg-contact-del {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.tg-contact-del:hover { color: var(--danger); background: rgba(251,113,133,0.1); }
+.tg-contact-del svg { width: 14px; height: 14px; }
+
+.tg-add-contact {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+}
+
+.tg-add-contact h4 { margin: 0; font-size: 13px; color: var(--text-2); }
+
+.tg-add-contact input {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: var(--glass-subtle);
+  color: var(--text-1);
+  font-size: 13px;
+}
+
+.tg-add-contact button {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.tg-add-contact button:disabled { opacity: 0.4; cursor: default; }
+
+/* Settings */
+
+.tg-settings-section { margin-bottom: 20px; }
+
+.tg-settings-section h4 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.tg-setting-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tg-setting-label { color: var(--text-2); font-size: 13px; }
+.tg-setting-value { color: var(--text-1); font-size: 13px; font-weight: 500; }
+
+/* Theme switcher */
+
+.tg-theme-switcher { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.tg-theme-btn {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: var(--glass-subtle);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.tg-theme-btn:hover { background: var(--glass-hover); }
+
+.tg-theme-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Profile */
+
+.tg-profile-big {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+}
+
+.tg-profile-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.tg-profile-number { font-size: 18px; font-weight: 600; letter-spacing: 0.05em; }
+.tg-profile-status { font-size: 13px; color: var(--text-2); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Chat panel (right side) — transparent to show scene
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-chat-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: transparent;
+  overflow: clip;
+  will-change: transform;
+}
+
+.tg-no-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  gap: 12px;
+}
+
+.tg-no-chat-icon svg { width: 80px; height: 80px; opacity: 0.12; }
+.tg-no-chat h2 { margin: 0; font-size: 20px; color: var(--text-2); font-weight: 500; letter-spacing: -0.03em; }
+.tg-no-chat p { margin: 0; font-size: 14px; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Chat header — glass panel
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 56px;
+  transition: background 0.2s;
+  position: relative;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.08), 0 4px 16px rgba(0,0,0,0.2);
+}
+
+.tg-chat-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tg-back-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  place-items: center;
+  transition: background 0.2s;
+}
+
+.tg-back-btn:hover { background: var(--glass-hover); }
+.tg-back-btn svg { width: 20px; height: 20px; }
+
+.tg-header-info { flex: 1; min-width: 0; cursor: pointer; }
+
+.tg-header-name {
+  font-weight: 500;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-1);
+  letter-spacing: -0.03em;
+}
+
+.tg-header-status {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.tg-header-status.online { color: var(--green); }
+.tg-header-status.typing { color: var(--accent); }
+
+.tg-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tg-header-action {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+.tg-header-action:hover { background: var(--glass-hover); color: var(--accent); }
+.tg-header-action:active { transform: scale(0.92); }
+.tg-header-action svg { width: 18px; height: 18px; }
+
+.tg-e2e-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  background: var(--accent-dim);
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.tg-timer-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--danger);
+  border: 1px solid rgba(251,113,133,0.3);
+  background: rgba(251,113,133,0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Chat search bar
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-chat-search-bar,
+.tg-chat-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--glass);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tg-chat-search-bar input,
+.tg-chat-search input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 12px;
+  background: var(--glass-subtle);
+  color: var(--text-1);
+  font-size: 13px;
+}
+
+.tg-chat-search-count {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.tg-chat-search-bar button,
+.tg-chat-search button {
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Pinned messages bar
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-pinned-bar {
+  background: var(--glass);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  flex-shrink: 0;
+  max-height: 120px;
+  overflow-y: auto;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tg-pinned-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.tg-pinned-header button {
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.tg-pinned-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.tg-pinned-preview {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.tg-pinned-unpin {
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Messages area — transparent to show scene behind
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+  contain: layout style;
+}
+
+.tg-messages::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 0;
+  flex-shrink: 0;
+}
+
+.tg-empty-msg {
+  margin: auto;
+  color: var(--text-3);
+  font-size: 13px;
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.6;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Date separator
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-date-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  margin: 8px 0;
+}
+
+.tg-date-separator span {
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--r-full);
+  letter-spacing: 0.02em;
+  border: 1px solid var(--border);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Message bubbles — glass elements
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-bubble-wrapper {
+  position: relative;
+  display: flex;
+  transition: transform 0.15s ease;
+  will-change: transform;
+  contain: layout;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 60px;
+}
+
+.tg-bubble-wrapper.swiping {
+  transition: none;
+}
+
+.tg-bubble {
+  max-width: min(520px, 70%);
+  padding: 10px 14px;
+  border-radius: 20px;
+  position: relative;
+  word-break: break-word;
+  will-change: transform, opacity;
+  transition: transform var(--motion-base, 220ms) cubic-bezier(0.4,0,0.2,1), box-shadow var(--motion-base, 220ms);
+}
+
+/* 6.4 — Different animations for in/out */
+.tg-bubble.in { animation: msgSlideLeft var(--motion-base, 220ms) cubic-bezier(0.34, 1.56, 0.64, 1); }
+.tg-bubble.out { animation: msgSlideRight var(--motion-base, 220ms) cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.tg-bubble:hover {
+  transform: translateY(-0.5px);
+}
+
+.tg-bubble:hover .tg-bubble-time {
+  opacity: 0.9;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes msgSlideLeft {
+  from { opacity: 0; transform: translateX(-12px) scale(0.97); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes msgSlideRight {
+  from { opacity: 0; transform: translateX(12px) translateY(4px) scale(0.97); }
+  to { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
+}
+
+/* Incoming — dark glass */
+.tg-bubble.in {
+  align-self: flex-start;
+  background: var(--bubble-in-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--bubble-in-border);
+  border-bottom-left-radius: 6px;
+  color: var(--text-1);
+  overflow: hidden;
+}
+
+.tg-bubble.in::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Outgoing — accent-tinted glass */
+.tg-bubble.out {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(100,110,220,0.20), rgba(140,100,200,0.14));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(110,168,254,0.08);
+  border-bottom-right-radius: 6px;
+  color: var(--text-1);
+  box-shadow: 0 0 20px rgba(110,150,255,0.03);
+  overflow: hidden;
+}
+
+.tg-bubble.out::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(110,168,254,0.4), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tg-bubble.out::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 35%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+[data-theme="light"] .tg-bubble.out {
+  background: linear-gradient(135deg, rgba(91,79,199,0.18), rgba(124,109,216,0.12));
+  border-color: rgba(91,79,199,0.1);
+  box-shadow: 0 0 20px rgba(91,79,199,0.04);
+}
+
+/* Message grouping — consecutive from same sender */
+.tg-bubble.in + .tg-bubble.in,
+.tg-bubble-wrapper + .tg-bubble-wrapper .tg-bubble.in {
+  border-top-left-radius: 6px;
+}
+
+.tg-bubble.out + .tg-bubble.out,
+.tg-bubble-wrapper + .tg-bubble-wrapper .tg-bubble.out {
+  border-top-right-radius: 6px;
+}
+
+.tg-bubble.grouped {
+  margin-top: 2px;
+}
+
+.tg-bubble.grouped.in {
+  border-top-left-radius: 6px;
+}
+
+.tg-bubble.grouped.out {
+  border-top-right-radius: 6px;
+}
+
+.tg-bubble.failed {
+  border: 1px solid rgba(251,113,133,0.4);
+}
+
+.tg-bubble.self-destruct {
+  border-style: dashed;
+}
+
+.tg-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 14px;
+  line-height: 1.45;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-msg-image-preview {
+  max-width: min(320px, 100%);
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  display: block;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-msg-file-name {
+  font-size: 12px;
+  color: var(--text-2);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.tg-msg-file {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-msg-file-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tg-msg-file-meta {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.pm-profile-more {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 12px;
+  padding: 6px;
+  border-radius: var(--r-md);
+  background: var(--glass-subtle);
+}
+
+.pm-profile-more .pm-row {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pm-profile-more .pm-row-danger {
+  color: #fb7185;
+}
+
+.tg-msg-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tg-msg-file-icon {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  border-radius: var(--r-sm);
+  background: var(--glass-subtle);
+}
+
+.tg-msg-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tg-msg-file-info .tg-msg-file-link {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+.tg-msg-media-video,
+.tg-msg-media-audio {
+  margin-bottom: 6px;
+}
+
+.tg-img-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.tg-img-fullscreen-overlay img {
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+  border-radius: var(--r-xs);
+}
+
+.tg-bubble-sender {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 3px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-bubble.out .tg-bubble-sender {
+  color: var(--accent);
+}
+
+.tg-bubble-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-bubble-time {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-3);
+  opacity: 0.5;
+  transition: opacity var(--motion-base, 220ms);
+  position: relative;
+  z-index: 2;
+}
+
+.tg-message-actions-trigger {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--glass-subtle);
+  color: var(--text-2);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background var(--motion-fast, 120ms), color var(--motion-fast, 120ms), transform var(--motion-fast, 120ms);
+}
+
+.tg-message-actions-trigger:hover,
+.tg-message-actions-trigger:focus-visible,
+.tg-message-actions-trigger.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.tg-message-actions-trigger:active {
+  transform: scale(0.94);
+}
+
+.tg-bubble.out .tg-bubble-time {
+  color: var(--text-2);
+}
+
+.tg-bubble-time.status-read { color: var(--read-color); }
+.tg-bubble.out .tg-bubble-time.status-read { color: var(--accent); }
+.tg-bubble-time.status-delivered { color: var(--text-3); }
+
+/* Forward label */
+.tg-forward-label {
+  font-size: 11px;
+  color: var(--accent);
+  font-style: italic;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-bubble.out .tg-forward-label {
+  color: var(--accent-2);
+}
+
+/* Reply quote inside bubble */
+.tg-reply-quote {
+  background: rgba(110,168,254,0.08);
+  border-left: 3px solid var(--accent);
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-bubble.out .tg-reply-quote {
+  background: rgba(255,255,255,0.08);
+  border-left-color: rgba(167,139,250,0.6);
+}
+
+.tg-reply-from {
+  display: block;
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.tg-bubble.out .tg-reply-from { color: var(--accent); }
+
+.tg-reply-text {
+  color: var(--text-2);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tg-bubble.out .tg-reply-text { color: var(--text-2); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Message status indicators
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-msg-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 2px;
+}
+
+.tg-msg-status.sent { color: var(--text-3); }
+.tg-msg-status.delivered { color: var(--text-3); }
+.tg-msg-status.read { color: var(--read-color); }
+
+.tg-bubble.out .tg-msg-status.sent { color: var(--text-3); }
+.tg-bubble.out .tg-msg-status.delivered { color: var(--text-2); }
+.tg-bubble.out .tg-msg-status.read { color: var(--accent); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Self-destruct timer badge
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-self-destruct-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--danger);
+  background: rgba(251,113,133,0.1);
+  border: 1px solid rgba(251,113,133,0.25);
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+  animation: pulse 2s infinite;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-self-destruct-timer {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--danger);
+  margin-left: 6px;
+  animation: pulse 2s infinite;
+  position: relative;
+  z-index: 2;
+}
+
+/* Self-destruct menu — glass */
+.tg-self-destruct-menu {
+  position: absolute;
+  bottom: 60px;
+  left: 8px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 50;
+  box-shadow: var(--glass-shadow);
+  animation: contextMenuIn var(--motion-fast, 120ms) ease-out;
+}
+
+.tg-self-destruct-menu button {
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: var(--r-xs);
+  text-align: left;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+
+.tg-self-destruct-menu button:hover { background: var(--glass-hover); }
+.tg-self-destruct-menu button.active { color: var(--accent); background: var(--accent-dim); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Reactions
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-reactions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-reaction-chip {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+  background: var(--glass-subtle);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tg-reaction-chip:hover { background: var(--glass-hover); transform: scale(1.05); }
+
+.tg-reaction-chip.own {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.tg-reaction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* Reaction popup & bar — glass */
+.tg-reaction-popup {
+  position: absolute;
+  z-index: 50;
+  animation: contextMenuIn 0.12s ease-out;
+}
+
+.tg-reaction-bar {
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 6px 8px;
+  display: flex;
+  gap: 2px;
+  box-shadow: var(--glass-shadow);
+}
+
+.tg-reaction-bar button {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--r-xs);
+  transition: background 0.12s, transform 0.1s;
+}
+
+.tg-reaction-bar button:hover {
+  background: var(--glass-hover);
+  transform: scale(1.2);
+}
+
+/* Reaction picker (legacy/alternative) */
+.tg-reaction-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 6px;
+  display: flex;
+  gap: 2px;
+  z-index: 50;
+  box-shadow: var(--glass-shadow);
+  animation: contextMenuIn 0.12s ease-out;
+}
+
+.tg-bubble.out .tg-reaction-picker {
+  left: auto;
+  right: 0;
+}
+
+.tg-reaction-picker button {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--r-xs);
+  transition: background 0.12s, transform 0.1s;
+}
+
+.tg-reaction-picker button:hover {
+  background: var(--glass-hover);
+  transform: scale(1.2);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Reply bar (above composer)
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  flex-shrink: 0;
+  animation: slideDown 0.15s ease-out;
+}
+
+.tg-reply-bar-content { flex: 1; min-width: 0; }
+
+.tg-reply-bar-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.tg-reply-bar-text {
+  display: block;
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tg-reply-bar-close {
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.tg-reply-bar-close:hover { background: var(--glass-hover); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Composer — floating glass capsule
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-composer {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 10px 14px;
+  margin: 6px 12px 12px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--glass-shadow);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.tg-composer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tg-composer-action {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  margin-bottom: 1px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-composer-action:hover { background: var(--glass-hover); color: var(--text-1); }
+.tg-composer-action.active { color: var(--accent); }
+
+/* Attachment button */
+.tg-attach-btn {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  margin-bottom: 1px;
+  font-size: 18px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-attach-btn:hover {
+  background: var(--glass-hover);
+  color: var(--text-1);
+  transform: rotate(45deg);
+}
+
+.tg-attach-btn:active { transform: scale(0.92); }
+
+.tg-composer textarea {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px 16px;
+  background: var(--glass-subtle);
+  color: var(--text-1);
+  resize: none;
+  min-height: 42px;
+  max-height: 160px;
+  font-size: 14px;
+  line-height: 1.4;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-composer textarea::placeholder { color: var(--text-3); }
+
+.tg-composer textarea:focus {
+  border-color: rgba(110,168,254,0.3) !important;
+  box-shadow: 0 0 0 2px rgba(110,168,254,0.06);
+}
+
+/* Send button — gradient primary */
+.tg-send-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1), opacity 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(110,168,254,0.25);
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.tg-send-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  pointer-events: none;
+}
+
+.tg-send-btn:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(110,168,254,0.4);
+}
+
+.tg-send-btn:active:not(:disabled) { transform: scale(0.93); }
+.tg-send-btn:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
+.tg-send-btn svg { width: 20px; height: 20px; }
+
+/* Microphone button */
+.tg-mic-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: var(--glass-hover);
+  color: var(--text-2);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  font-size: 18px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-mic-btn:hover {
+  background: var(--bg-4);
+  color: var(--text-1);
+}
+
+.tg-mic-btn:active { transform: scale(0.93); }
+
+.tg-mic-btn.recording {
+  background: rgba(251,113,133,0.15);
+  color: var(--danger);
+  animation: pulse 1s infinite;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Voice recording UI
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-voice-recording {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  animation: fadeIn 0.2s ease-out;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tg-voice-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: tg-pulse 1s infinite;
+}
+
+@keyframes tg-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.tg-voice-wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  flex: 1;
+}
+
+.tg-voice-wave span {
+  display: inline-block;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: waveBar 0.6s ease-in-out infinite alternate;
+}
+
+.tg-voice-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+.tg-voice-wave span:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+.tg-voice-wave span:nth-child(3) { height: 24px; animation-delay: 0.2s; }
+.tg-voice-wave span:nth-child(4) { height: 12px; animation-delay: 0.3s; }
+.tg-voice-wave span:nth-child(5) { height: 20px; animation-delay: 0.15s; }
+.tg-voice-wave span:nth-child(6) { height: 10px; animation-delay: 0.25s; }
+.tg-voice-wave span:nth-child(7) { height: 18px; animation-delay: 0.05s; }
+
+@keyframes waveBar {
+  from { height: 4px; }
+  to { height: 28px; }
+}
+
+.tg-voice-timer {
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 44px;
+}
+
+.tg-voice-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  font-size: 14px;
+  min-width: 30px;
+}
+
+.tg-voice-cancel,
+.tg-voice-send {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.tg-voice-cancel { color: var(--danger); }
+.tg-voice-cancel:hover { background: rgba(251,113,133,0.1); }
+
+.tg-voice-send { color: var(--accent); }
+.tg-voice-send:hover { background: var(--accent-dim); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   File / voice message bubble
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-file-bubble {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-file-bubble .tg-file-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.tg-bubble.out .tg-file-bubble .tg-file-icon {
+  background: rgba(255,255,255,0.1);
+  color: var(--accent);
+}
+
+.tg-file-bubble .tg-file-info { flex: 1; min-width: 0; }
+
+.tg-file-bubble .tg-file-name {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tg-file-bubble .tg-file-size {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.tg-bubble.out .tg-file-bubble .tg-file-size {
+  color: var(--text-3);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Typing indicator
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+
+.tg-typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin: 0 1.5px;
+  animation: typingBounce 1.4s infinite;
+}
+
+.tg-typing-dot:nth-child(2) { animation-delay: 0.16s; }
+.tg-typing-dot:nth-child(3) { animation-delay: 0.32s; }
+
+.typing-dots::after {
+  content: '';
+  animation: typingDots 1.4s steps(1) infinite;
+}
+@keyframes typingDots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Context menu — glass-strong
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes contextMenuIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.tg-context-menu {
+  position: fixed;
+  z-index: 310;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px;
+  min-width: 180px;
+  box-shadow: var(--glass-shadow);
+  animation: contextMenuIn 0.12s ease-out;
+  overflow: hidden;
+}
+
+.tg-context-menu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tg-context-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: var(--r-xs);
+  text-align: left;
+  transition: background 0.12s;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-context-menu button:hover { background: var(--glass-hover); }
+
+.tg-context-menu button.danger { color: var(--danger); }
+.tg-context-menu button.danger:hover { background: rgba(251,113,133,0.08); }
+
+.tg-context-menu button svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.tg-context-menu .separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Swipe gesture visual feedback
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-swipe-reply-indicator {
+  position: absolute;
+  left: -36px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tg-bubble-wrapper.swiping .tg-swipe-reply-indicator {
+  opacity: 1;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Call overlay (fullscreen)
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  background: var(--void);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.tg-call-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+.tg-call-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tg-call-videos {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.tg-call-remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tg-call-local-video {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 140px;
+  height: 200px;
+  border-radius: var(--r-sm);
+  border: 2px solid rgba(255,255,255,0.15);
+  object-fit: cover;
+  z-index: 2;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.tg-call-no-video {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(35,20,80,0.3), transparent 60%),
+    var(--void);
+}
+
+.tg-call-info { text-align: center; padding: 20px; flex-shrink: 0; }
+
+.tg-call-peer {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: -0.03em;
+}
+
+.tg-call-status {
+  font-size: 14px;
+  color: var(--text-3);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tg-call-controls {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  justify-content: center;
+  background: linear-gradient(to top, var(--void), transparent);
+  flex-shrink: 0;
+}
+
+.tg-call-control {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  color: var(--text-2);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  border: 1px solid var(--border);
+}
+
+.tg-call-control:hover { background: var(--glass-hover); transform: scale(1.05); }
+.tg-call-control:active { transform: scale(0.95); }
+
+.tg-call-control.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.tg-call-control.accept {
+  background: rgba(74,222,128,0.15);
+  color: var(--green);
+  border-color: rgba(74,222,128,0.2);
+}
+
+.tg-call-control.accept:hover { background: rgba(74,222,128,0.25); }
+
+.tg-call-control.reject {
+  background: rgba(251,113,133,0.15);
+  color: var(--danger);
+  border-color: rgba(251,113,133,0.2);
+}
+
+.tg-call-control.reject:hover { background: rgba(251,113,133,0.25); }
+
+.tg-call-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.tg-call-btn:hover:not(:disabled) { background: var(--glass-hover); }
+.tg-call-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tg-call-active { text-align: center; padding: 24px 16px; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Chat customization panel
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-customize-panel {
+  padding: 16px;
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tg-customize-panel h4 {
+  font-size: 12px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.tg-color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tg-color-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.tg-color-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.tg-color-swatch.active {
+  border-color: var(--text-1);
+  box-shadow: 0 0 0 3px var(--void), 0 0 0 5px var(--text-1);
+}
+
+.tg-wallpaper-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tg-wallpaper-swatch {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.tg-wallpaper-swatch:hover { transform: scale(1.08); }
+
+.tg-wallpaper-swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Saved messages icon
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-saved-msg-icon {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  color: white;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   QR code modal
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--glass-subtle);
+  border-radius: var(--r-sm);
+  margin-top: 8px;
+}
+
+.tg-qr-container canvas {
+  border-radius: var(--r-xs);
+  background: white;
+  padding: 16px;
+  box-shadow: 0 4px 16px var(--shadow);
+  image-rendering: pixelated;
+}
+
+.tg-qr-label {
+  font-size: 12px;
+  color: var(--text-2);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Drag & drop overlay
+   ══════════════════════════════════════════════════════════════ */
+
+.drag-overlay,
+.tg-drag-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(110,168,254,0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.drag-overlay-content,
+.tg-drag-overlay-content {
+  text-align: center;
+  color: var(--accent);
+}
+
+.drag-overlay-content svg,
+.tg-drag-overlay-content svg {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 10px;
+}
+
+.drag-overlay-content p,
+.tg-drag-overlay-content p {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Emoji picker area — glass
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-emoji-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 8px;
+  margin-bottom: 8px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: var(--glass-shadow);
+  z-index: 50;
+  animation: contextMenuIn 0.12s ease-out;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.tg-emoji-picker .tg-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.tg-emoji-picker button {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--r-xs);
+  transition: background 0.12s, transform 0.1s;
+}
+
+.tg-emoji-picker button:hover {
+  background: var(--glass-hover);
+  transform: scale(1.15);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Toast notifications — glass
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  max-width: min(420px, calc(100% - 32px));
+  font-size: 13px;
+  color: var(--text-1);
+  z-index: 300;
+  box-shadow: var(--glass-shadow);
+  animation: toastIn 0.3s ease-out;
+}
+
+.tg-toast.error {
+  background: rgba(251,113,133,0.12);
+  border-color: rgba(251,113,133,0.3);
+  color: var(--danger);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Privacy modal / Onboarding — glass-strong
+   ══════════════════════════════════════════════════════════════ */
+
+.privacy-modal {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 400;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.privacy-modal section {
+  width: min(480px, 100%);
+  border: 1px solid var(--border);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: var(--glass-shadow);
+  animation: cardIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.privacy-modal section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.privacy-modal section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-shine);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.privacy-modal h4 { margin: 0 0 16px; font-size: 18px; font-weight: 600; letter-spacing: -0.03em; position: relative; z-index: 2; }
+.privacy-modal p { color: var(--text-2); font-size: 14px; margin: 0; position: relative; z-index: 2; }
+
+.privacy-modal button {
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 12px 16px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  cursor: pointer;
+  min-height: 46px;
+  width: 100%;
+  font-weight: 600;
+  margin-top: 16px;
+  transition: filter 0.2s, transform 0.1s;
+  position: relative;
+  z-index: 2;
+}
+
+.privacy-modal button:hover { filter: brightness(1.1); }
+.privacy-modal button:active { transform: scale(0.97); }
+
+/* Onboarding steps */
+.onboarding-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.onboarding-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.onboarding-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
+}
+
+.onboarding-step strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.onboarding-step p {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Screen / panel transitions
+   ══════════════════════════════════════════════════════════════ */
+
+@keyframes screenFade {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.tg-chat-area {
+  animation: screenFade var(--motion-base, 220ms) ease-out;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Group typing indicators
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-group-typing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.tg-group-typing .tg-typing-dot {
+  width: 5px;
+  height: 5px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Mobile responsive
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .tg-layout,
+  .tg-root {
+    grid-template-columns: 1fr;
+  }
+
+  .tg-sidebar {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    z-index: 10;
+    border-radius: 0;
+    transition: transform var(--motion-base, 220ms) cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .tg-sidebar.mobile-hidden {
+    transform: translateX(-100%);
+  }
+
+  .tg-chat-panel {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    z-index: 11;
+    transform: translateX(100%);
+    transition: transform var(--motion-base, 220ms) cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .tg-chat-panel.mobile-open {
+    transform: translateX(0);
+  }
+
+  .tg-back-btn {
+    display: grid;
+  }
+
+  .tg-fab-wrap {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .tg-fab {
+    width: 50px;
+    height: 50px;
+  }
+
+  .tg-composer {
+    margin: 4px 8px 8px;
+  }
+
+  .tg-composer textarea {
+    font-size: 16px; /* prevents iOS zoom */
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+
+  .tg-toast {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 80px;
+  }
+
+  .tg-bubble {
+    max-width: min(520px, 85%);
+  }
+
+  .tg-reaction-picker {
+    position: fixed;
+    bottom: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 16px;
+    right: 16px;
+    max-height: 50vh;
+    overflow-y: auto;
+    justify-content: center;
+  }
+
+  .tg-message-actions-trigger {
+    width: 34px;
+    height: 34px;
+  }
+
+  .tg-reaction-bar {
+    justify-content: center;
+  }
+
+  .tg-context-menu {
+    position: fixed;
+    left: 16px !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    top: auto !important;
+    min-width: unset;
+    border-radius: 16px;
+  }
+
+  .tg-call-local-video {
+    width: 100px;
+    height: 140px;
+    bottom: 100px;
+    right: 12px;
+  }
+
+  .tg-messages {
+    padding: 10px 12px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .tg-chat-item { padding: 8px 10px; gap: 10px; }
+  .tg-chat-avatar { width: 40px; height: 40px; font-size: 14px; }
+  .tg-chat-name { font-size: 13px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Utility: button press scale
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-chat-item:active,
+.tg-tab:active,
+.tg-header-action:active,
+.tg-menu-nav button:active,
+.tg-call-control:active {
+  transform: scale(0.97);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Print — hide UI chrome
+   ══════════════════════════════════════════════════════════════ */
+
+@media print {
+  .tg-sidebar,
+  .tg-composer,
+  .tg-fab-wrap,
+  .tg-chat-header { display: none; }
+
+  .tg-messages { overflow: visible; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Add Contact — prominent button in chat header
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-add-contact-btn {
+  background: var(--accent-dim) !important;
+  border-radius: var(--r-xs) !important;
+  padding: 4px 8px !important;
+  position: relative;
+}
+
+.tg-add-contact-btn svg {
+  color: var(--accent) !important;
+}
+
+.tg-add-contact-btn:hover {
+  background: rgba(110,168,254,0.2) !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Add Contact Modal — glass-strong
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.tg-modal {
+  width: min(380px, 90vw);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 0;
+  box-shadow: var(--glass-shadow);
+  animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.tg-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--glass-specular);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tg-modal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--glass-shine);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.tg-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 0;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-modal-header h3 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.tg-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  padding: 4px;
+  border-radius: var(--r-xs);
+  transition: all 0.2s;
+}
+
+.tg-modal-close:hover {
+  background: var(--glass-hover);
+  color: var(--text-1);
+}
+
+.tg-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px 16px;
+  gap: 12px;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-modal-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 24px;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.tg-modal-number {
+  font-size: 14px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.tg-modal-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  background: var(--glass-subtle);
+  color: var(--text-1);
+  font-size: 15px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.tg-modal-input:focus {
+  border-color: rgba(110,168,254,0.5);
+  box-shadow: 0 0 0 3px rgba(110,168,254,0.1);
+}
+
+.tg-modal-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 20px 20px;
+  justify-content: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.tg-modal-btn {
+  border: none;
+  border-radius: var(--r-sm);
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  min-height: 40px;
+}
+
+.tg-modal-btn.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.tg-modal-btn.primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  pointer-events: none;
+}
+
+.tg-modal-btn.primary:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.tg-modal-btn.primary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tg-modal-btn.secondary {
+  background: var(--glass-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+
+.tg-modal-btn.secondary:hover {
+  background: var(--glass-hover);
+  color: var(--text-1);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Swipe-to-delete indicator
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-swipe-delete-indicator {
+  position: absolute;
+  right: -36px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.tg-bubble-wrapper.swiping-delete .tg-swipe-delete-indicator {
+  opacity: 1;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Danger & Secondary button styles
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tg-btn-danger:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.tg-btn-secondary {
+  background: var(--glass-subtle);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tg-btn-secondary:hover {
+  background: var(--glass-hover);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Saved Messages icon (Phase 3)
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-saved-msg-icon {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   6.1 — Header dropdown "..." menu
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-header-peer-clickable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  border-radius: 10px;
+  padding: 4px 8px;
+  transition: background 0.15s;
+}
+.tg-header-peer-clickable:hover { background: var(--glass-hover); }
+
+.tg-header-more-wrap { position: relative; }
+
+.tg-header-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.tg-header-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 0;
+  min-width: 200px;
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  animation: contextMenuIn var(--motion-fast, 120ms) ease-out;
+}
+
+.tg-header-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: var(--text-1);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+.tg-header-dropdown button:hover { background: var(--glass-hover); }
+.tg-header-dropdown .tg-dropdown-danger { color: var(--danger); }
+.tg-header-dropdown .tg-dropdown-e2e {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-3);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   6.2 — Peer profile panel
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-peer-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px 16px;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  animation: slideDown var(--motion-base, 220ms) ease-out;
+}
+
+.tg-peer-profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.tg-peer-profile-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 2px;
+}
+
+.tg-peer-profile-number {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+
+.tg-peer-profile-status {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 14px;
+}
+.tg-peer-profile-status.online { color: var(--green); }
+
+.tg-peer-profile-actions {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.tg-peer-profile-actions button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--glass-subtle);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 16px;
+  color: var(--text-1);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tg-peer-profile-actions button:hover { background: var(--glass-hover); }
+.tg-peer-profile-danger { color: var(--danger) !important; }
+
+.tg-peer-profile-e2e {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.tg-peer-profile-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.tg-peer-profile-close:hover { background: var(--glass-hover); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   6.3 — Skeleton loading
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.tg-skeleton-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.tg-skeleton {
+  background: linear-gradient(90deg, var(--glass-subtle) 25%, var(--glass-hover) 50%, var(--glass-subtle) 75%);
+  background-size: 200% 100%;
+  /* Унификация с Android/iOS — motion.duration.shimmer = 1000ms (sec.md §10.2). */
+  animation: skeletonShimmer 1s infinite ease-in-out;
+  border-radius: 8px;
+}
+
+.tg-skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tg-skeleton-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tg-skeleton-line-name { height: 14px; width: 60%; }
+.tg-skeleton-line-msg { height: 12px; width: 85%; }
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   6.9 — Empty state onboarding
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-empty-onboarding {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+  max-width: 320px;
+}
+
+.tg-onboarding-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.tg-onboarding-num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   6.12 — Auto-resize composer textarea
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-composer textarea {
+  overflow-y: auto;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   6.14 — Scroll to bottom button
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-scroll-bottom-btn {
+  position: absolute;
+  bottom: 80px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: all 0.2s;
+  animation: fadeIn var(--motion-fast, 120ms) ease-out;
+}
+.tg-scroll-bottom-btn:hover {
+  background: var(--glass-hover);
+  transform: scale(1.08);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   7.1 — Privacy toggle switches
+   ══════════════════════════════════════════════════════════════ */
+
+.tg-setting-toggle {
+  justify-content: space-between;
+}
+
+.tg-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.tg-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.tg-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--glass-subtle);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.tg-toggle-slider::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: all 0.25s;
+}
+
+.tg-toggle input:checked + .tg-toggle-slider {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.tg-toggle input:checked + .tg-toggle-slider::before {
+  transform: translateX(20px);
+  background: white;
+}
+
+/* ══════════════════════════════════════════════════════
+   App Lock Screen (4.7)
+   ══════════════════════════════════════════════════════ */
+
+.tg-app-lock-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-1);
+  z-index: 99999;
+  backdrop-filter: blur(30px);
+}
+
+.tg-app-lock-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 40px;
+  background: var(--glass-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.tg-app-lock-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.tg-app-lock-card h2 {
+  color: var(--text-1);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.tg-app-lock-card p {
+  color: var(--text-2);
+  font-size: 14px;
+  margin: 0;
+}
+
+.tg-app-lock-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-1);
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 8px;
+  font-family: monospace;
+  outline: none;
+  transition: border-color 220ms;
+}
+
+.tg-app-lock-input:focus {
+  border-color: var(--accent);
+}
+
+.tg-app-lock-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 220ms;
+}
+
+.tg-app-lock-btn:hover {
+  opacity: 0.9;
+}
+
+/* ══════════════════════════════════════════════════════
+   Key Verification / Safety Numbers (4.5)
+   ══════════════════════════════════════════════════════ */
+
+.tg-verify-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 220ms;
+}
+
+.tg-verify-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tg-key-verify-panel {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.tg-key-verify-title {
+  color: var(--text-1);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.tg-key-verify-desc {
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.tg-key-verify-fingerprints {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.tg-key-fp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tg-key-fp-label {
+  color: var(--text-3);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tg-key-fp-code {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--accent);
+  background: var(--bg-3);
+  padding: 8px 12px;
+  border-radius: var(--r-xs);
+  word-break: break-all;
+  letter-spacing: 1px;
+}
+
+.tg-key-qr-block {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.tg-key-qr-placeholder {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #000;
+  font-family: monospace;
+  font-size: 9px;
+  border-radius: var(--r-xs);
+  word-break: break-all;
+  padding: 8px;
+  text-align: center;
+}
+
+.tg-verify-action-btn,
+.tg-verify-confirmed-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 220ms;
+}
+
+.tg-verify-action-btn {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tg-verify-confirmed-btn {
+  background: var(--green);
+  color: #fff;
+}
+
+.tg-verify-action-btn:hover,
+.tg-verify-confirmed-btn:hover {
+  opacity: 0.85;
+}
+
+.tg-peer-profile-section {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════
+   Burn After Read (4.6)
+   ══════════════════════════════════════════════════════ */
+
+.tg-burn-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 14px;
+  background: linear-gradient(135deg, rgba(255, 100, 0, 0.08), rgba(255, 60, 0, 0.04));
+  border: 1px dashed rgba(255, 120, 0, 0.3);
+  border-radius: var(--r-md);
+  transition: all 220ms;
+  user-select: none;
+}
+
+.tg-burn-msg:hover {
+  background: linear-gradient(135deg, rgba(255, 100, 0, 0.15), rgba(255, 60, 0, 0.08));
+  border-color: rgba(255, 120, 0, 0.5);
+}
+
+.tg-burn-icon {
+  font-size: 20px;
+  animation: burnFlicker 1.5s ease-in-out infinite;
+}
+
+@keyframes burnFlicker {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.tg-burn-revealed {
+  animation: burnReveal 0.5s ease-out;
+}
+
+@keyframes burnReveal {
+  from { opacity: 0; filter: blur(10px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+.tg-burn-fading {
+  animation: burnFade 3s ease-in forwards;
+}
+
+@keyframes burnFade {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.95); }
+}
+
+/* ══════════════════════════════════════════════════════
+   P2P Mode Indicator (4.8)
+   ══════════════════════════════════════════════════════ */
+
+.tg-p2p-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  background: linear-gradient(135deg, var(--green), rgba(0, 200, 100, 0.6));
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--r-full);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: p2pPulse 2s ease-in-out infinite;
+}
+
+@keyframes p2pPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 200, 100, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 200, 100, 0); }
+}
+
+/* ══════════════════════════════════════════════════════
+   Screenshot Alert
+   ══════════════════════════════════════════════════════ */
+
+.tg-screenshot-alert {
+  text-align: center;
+  padding: 8px 16px;
+  margin: 4px auto;
+  background: rgba(255, 60, 60, 0.1);
+  border: 1px solid rgba(255, 60, 60, 0.2);
+  border-radius: var(--r-md);
+  color: var(--danger);
+  font-size: 13px;
+  max-width: 280px;
+}
+
+/* ══════════════════════════════════════════════════════
+   Settings: App Lock & Panic Mode (4.3, 4.7)
+   ══════════════════════════════════════════════════════ */
+
+.tg-applock-settings,
+.tg-panic-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.tg-panic-desc {
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.tg-pin-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text-1);
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 6px;
+  font-family: monospace;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.tg-pin-input:focus {
+  border-color: var(--accent);
+}
+
+.tg-accent-btn {
+  padding: 10px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 220ms;
+}
+
+.tg-accent-btn:hover { opacity: 0.85; }
+.tg-accent-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tg-danger-btn {
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid rgba(255, 60, 60, 0.3);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 220ms;
+}
+
+.tg-danger-btn:hover {
+  background: rgba(255, 60, 60, 0.1);
+}
+
+.tg-select {
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xs);
+  color: var(--text-1);
+  font-size: 13px;
+  outline: none;
+}
+
+.tg-menu-section {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.tg-menu-section-title {
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Accessibility — focus, motion, error states
+   ══════════════════════════════════════════════════════════════ */
+
+/* Global keyboard focus ring (D5). Mouse clicks (no :focus-visible) skip it. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+input:focus-visible,
+textarea:focus-visible {
+  outline-offset: 0;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(110,168,254,0.18);
+}
+
+/* Visual error state for OTP / form inputs (9.4). */
+input[aria-invalid="true"],
+.otp-grid input[aria-invalid="true"] {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(251,113,133,0.15);
+}
+
+/* Reduced motion (D3) — respect OS-level preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Stop the ambient orb drift entirely. */
+  .app-root::before,
+  .app-root::after {
+    animation: none !important;
+  }
+}
+
+/* OTP grid adaptivity for narrow phones (9.5). */
+@media (max-width: 480px) {
+  .otp-grid {
+    grid-template-columns: repeat(6, minmax(36px, 1fr));
+    gap: 6px;
+  }
+  .otp-grid input {
+    font-size: 18px;
+    min-height: 44px;
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .otp-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
+/* Connection bar shown while reconnecting (9.7). */
+.tg-connecting-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255,165,40,0.92), rgba(255,135,40,0.92));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+
+.tg-connecting-bar.offline {
+  background: linear-gradient(135deg, rgba(220,80,80,0.92), rgba(190,60,60,0.92));
+}
+
+.tg-connecting-bar::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 0 0 0 rgba(255,255,255,0.6);
+  animation: connPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes connPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+}
+
+/* Phantom Number explainer in empty state. */
+.tg-phantom-help {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--glass-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 360px;
+}
+
+.tg-phantom-help strong {
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.tg-phantom-help a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* Inline help icon next to "Phantom Number" label. */
+.tg-help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  background: var(--glass-subtle);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: help;
+  vertical-align: middle;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tg-help-icon:hover,
+.tg-help-icon:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   §10.x — Polish helpers
+   ══════════════════════════════════════════════════════════════ */
+
+/* Universal "spring" press feedback for primary buttons. */
+.spring-press {
+  transition:
+    transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spring-press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spring-press,
+  .spring-press:active {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   §10.6 — Onboarding (3 screens)
+   ══════════════════════════════════════════════════════════════ */
+
+.phantom-onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(110, 168, 254, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(167, 139, 250, 0.10) 0%, transparent 55%),
+    var(--color-bg, #080A0E);
+  color: var(--text-1);
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.phantom-onboarding-skip {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  right: 16px;
+  z-index: 2;
+  padding: 8px 14px;
+  background: var(--glass-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill, 999px);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.phantom-onboarding-skip:hover {
+  color: var(--text-1);
+  background: var(--glass-hover);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.phantom-onboarding-track {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.phantom-onboarding-page {
+  flex: 0 0 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 80px 32px 32px;
+  text-align: center;
+}
+
+.phantom-onboarding-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 144px;
+  height: 144px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(110, 168, 254, 0.16), rgba(167, 139, 250, 0.12));
+  border: 1px solid rgba(110, 168, 254, 0.25);
+  color: var(--accent);
+  filter: drop-shadow(0 8px 24px rgba(110, 168, 254, 0.4));
+  transform: scale(0) rotate(-12deg);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.4s ease-out;
+}
+
+.phantom-onboarding-icon-wrap.in {
+  transform: scale(1) rotate(0deg);
+  opacity: 1;
+}
+
+.phantom-onboarding-icon-wrap > svg {
+  position: relative;
+  z-index: 1;
+}
+
+.phantom-onboarding-icon-glow {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(110, 168, 254, 0.30) 0%, transparent 65%);
+  pointer-events: none;
+  animation: phantomPulse 3.6s ease-in-out infinite;
+}
+
+@keyframes phantomPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.9; transform: scale(1.08); }
+}
+
+.phantom-onboarding-title {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 8px;
+  max-width: 480px;
+  background: linear-gradient(135deg, var(--text-1), var(--text-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.phantom-onboarding-desc {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-2);
+  max-width: 460px;
+  margin: 0;
+}
+
+.phantom-onboarding-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 24px 36px;
+}
+
+.phantom-onboarding-dots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.phantom-onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.22s ease;
+}
+
+.phantom-onboarding-dot.active {
+  background: var(--accent);
+  transform: scale(1.4);
+  box-shadow: 0 0 12px rgba(110, 168, 254, 0.55);
+}
+
+.phantom-onboarding-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  min-width: 220px;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2, #a78bfa) 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    0 8px 24px rgba(110, 168, 254, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.phantom-onboarding-cta:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    0 10px 28px rgba(110, 168, 254, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+@media (max-width: 480px) {
+  .phantom-onboarding-title { font-size: 22px; }
+  .phantom-onboarding-desc  { font-size: 14px; }
+  .phantom-onboarding-icon-wrap { width: 120px; height: 120px; }
+  .phantom-onboarding-icon-wrap > svg { width: 80px; height: 80px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   §10.x — Phantom Toast (stack)
+   ══════════════════════════════════════════════════════════════ */
+
+.phantom-toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 600;
+  pointer-events: none;
+  width: min(420px, calc(100% - 32px));
+}
+
+.phantom-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--color-surface, var(--glass-strong));
+  border: 2px solid var(--color-border, var(--border));
+  border-radius: var(--radius-md, 16px);
+  color: var(--text-1);
+  font-size: 13.5px;
+  line-height: 1.4;
+  box-shadow: var(--elevation-3, 0 12px 32px rgba(0,0,0,0.55));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  pointer-events: auto;
+  animation: phantomToastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: bottom center;
+}
+
+.phantom-toast.leaving {
+  animation: phantomToastOut 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.phantom-toast-info    { border-color: var(--color-info,    #60A5FA); }
+.phantom-toast-success { border-color: var(--color-success, #34D399); }
+.phantom-toast-warning { border-color: var(--color-warning, #FACC15); }
+.phantom-toast-error   { border-color: var(--color-danger,  #EF4444); }
+
+.phantom-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.phantom-toast-info    .phantom-toast-icon { color: var(--color-info,    #60A5FA); }
+.phantom-toast-success .phantom-toast-icon { color: var(--color-success, #34D399); }
+.phantom-toast-warning .phantom-toast-icon { color: var(--color-warning, #FACC15); }
+.phantom-toast-error   .phantom-toast-icon { color: var(--color-danger,  #EF4444); }
+
+.phantom-toast-message {
+  flex: 1;
+  word-break: break-word;
+}
+
+.phantom-toast-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-3);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.phantom-toast-close:hover {
+  background: var(--glass-hover);
+  color: var(--text-1);
+}
+
+@keyframes phantomToastIn {
+  from { opacity: 0; transform: translateY(100%) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+@keyframes phantomToastOut {
+  from { opacity: 1; transform: translateY(0)    scale(1);    }
+  to   { opacity: 0; transform: translateY(20%)  scale(0.96); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phantom-toast,
+  .phantom-toast.leaving,
+  .phantom-onboarding-track,
+  .phantom-onboarding-icon-wrap,
+  .phantom-onboarding-dot,
+  .phantom-onboarding-icon-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+  .phantom-onboarding-icon-wrap { transform: scale(1) rotate(0deg); opacity: 1; }
+}

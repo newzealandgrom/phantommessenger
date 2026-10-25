@@ -1,0 +1,220 @@
+# Phantom Messenger — свой сервер
+
+Пакет для оператора: поднимает на вашем Ubuntu-сервере и вашем домене собственный relay Phantom Messenger,
+веб-клиент и TURN-сервер для звонков. Приложения (Android, iOS, macOS) подключаются к нему через
+«Настройки → Сервер → Сменить сервер».
+
+English version: [README.en.md](README.en.md)
+
+## Что нужно знать до установки
+
+- **Федерации нет.** Сервер — отдельный «остров»: справочник ключей, очередь доставки и сигналинг звонков живут
+  внутри одного relay. Пользователь вашего сервера не увидит и не сможет написать пользователю другого сервера
+  (в том числе phantommessenger.org). В приложении выбран один сервер на все аккаунты. Один и тот же номер можно
+  зарегистрировать на нескольких серверах независимо — ключи устройств и safety number там будут разными.
+- **Push-уведомлений на вашем сервере нет.** Ключи FCM/APNs принадлежат владельцу приложений и в пакет не входят.
+  Сообщения приходят, пока приложение открыто (активное WebSocket-соединение), и из offline-очереди при следующем
+  подключении.
+- **Коды входа идут через сервис номеров владельца проекта (Phantom Numbers, phantomnumbers.org).** Для этого нужен ключ интеграции
+  (см. ниже). Сервис видит номер, время запроса и имя вашей интеграции (= ваш сервер) и IP вашего relay;
+  владелец номера видит «запрос входа от <имя вашего сервера>».
+- **Вы — оператор и отвечаете за сервер.** Пользователи доверяют вам так же, как проекту доверяют на
+  phantommessenger.org. Ниже — что именно видит оператор.
+- **Сервер должен быть выделенным.** Установщик настраивает и перезапускает nginx и coturn целиком (общий конфиг
+  coturn `/etc/turnserver.conf` перезаписывается), занимает порты 80/443/3478/5349 и при удалении останавливает coturn.
+  Чужие сайты и TURN на том же хосте не поддерживаются.
+- Документ аудита (`SECURITY_AUDIT.md`) описывает инфраструктуру основного сервера проекта и в пакет **не входит**:
+  `/SECURITY_AUDIT.md` на вашем сервере отвечает 404.
+
+## Требования
+
+| | |
+|---|---|
+| ОС | Ubuntu 24.04 LTS (Python 3.12). Debian 12 — как получится, не проверялась. Ubuntu 22.04 не поддерживается. |
+| Ресурсы | 1 vCPU, ≥ 1 ГБ RAM (2 ГБ лучше), 10 ГБ диска. amd64 основная платформа, arm64 — best effort. |
+| Сервер | отдельный VPS: установщик занимает порты 80/443 (nginx) и 3478/5349 (coturn) и не рассчитан на общий хост |
+| Домен | поддомен, например `msg.example.com` (рекомендуется именно поддомен: HSTS сервера распространится на его вложенные имена) и `turn.msg.example.com` для TURN |
+| Порты | 80/tcp, 443/tcp, 3478/tcp+udp, 5349/tcp, 49152-65535/udp (диапазон relay-портов TURN) — откройте и у провайдера VPS |
+| Ключ | ключ интеграции сервиса номеров (раздел «Ключ сервиса номеров») |
+
+## Установка
+
+```bash
+tar xzf phantom-selfhost-X.Y.Z.tar.gz
+cd phantom-selfhost-X.Y.Z
+sudo ./install.sh --dry-run --non-interactive --domain msg.example.com --email you@example.com \
+  --tls letsencrypt --service-key-file /root/numbers.key \
+  --signer-fingerprint SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY   # посмотреть план, ничего не меняя
+sudo ./install.sh                                                  # диалог
+sudo ./install.sh --non-interactive --domain msg.example.com --email you@example.com \
+  --tls letsencrypt --service-key-file /root/numbers.key \
+  --signer-fingerprint SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY      # без вопросов
+```
+
+### Проверка релиза (релизы всегда подписаны)
+
+Каждый релиз подписан владельцем проекта (`ssh-keygen -Y`, namespace `phantom-selfhost`). Отпечаток ключа подписи:
+
+```
+SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY
+```
+
+Перед распаковкой проверьте архив и подпись, получив отпечаток независимо от архива (сайт проекта, репозиторий):
+
+```bash
+sha256sum -c SHA256SUMS
+# файл allowed_signers с публичным ключом владельца (строка phantom-release namespaces="phantom-selfhost" ssh-ed25519 …):
+ssh-keygen -lf allowed_signers          # отпечаток должен совпасть с указанным выше
+ssh-keygen -Y verify -f allowed_signers -I phantom-release -n phantom-selfhost -s SHA256SUMS.sig < SHA256SUMS
+```
+
+Дальше проверку берёт на себя пакет. `update.sh` и **повторный** `install.sh` (из распакованного архива поверх уже
+установленного сервера) отказываются работать без валидной подписи: ключ берётся из **установленного** пакета
+(`/opt/phantom-messenger/selfhost/allowed_signers`), а не из скачанного архива, поэтому подменённый архив со своим
+ключом не пройдёт. Для повторного `install.sh` положите рядом с каталогом пакета `phantom-selfhost-X.Y.Z.tar.gz`,
+`SHA256SUMS` и `SHA256SUMS.sig`. Для **первой** установки ключа ещё нет, и он берётся из самого архива — поэтому передайте
+`--signer-fingerprint SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY` (и `SHA256SUMS`, `SHA256SUMS.sig`, архив рядом с каталогом пакета): при несовпадении
+отпечатка, а также если подпись проверить нельзя, установщик останавливается. Тот же флаг понимает `update.sh`.
+Установщик не принимает релиз старее установленного (`--force` — для сознательного отката). Опт-аут `--allow-unsigned` существует, но небезопасен: проверяется только целостность,
+не подлинность, а чужой код выполняется от root.
+
+После установки **удалите исходные файлы с секретами** (ключ сертификата, файл с ключом номеров, токен Cloudflare):
+установщик копирует их в `/etc/phantom-messenger` (0600/0640), а исходники остаются там, где вы их положили
+(`shred -u файл`). В `/opt/phantom-messenger/selfhost` попадают только файлы релиза.
+
+Флаги `install.sh` (`./install.sh --help`):
+
+| Флаг | Значение |
+|---|---|
+| `--domain` | домен сервера |
+| `--tls` | `letsencrypt` · `cloudflare-dns` · `cloudflare-origin` · `custom` |
+| `--email` | почта для Let's Encrypt |
+| `--service-key-file` | файл с ключом сервиса номеров (также `PM_SERVICE_KEY`; `--service-key` виден в `ps`) |
+| `--cf-api-token-file` | для `cloudflare-dns`: файл с API-токеном (право Zone:DNS:Edit) |
+| `--origin-cert`, `--origin-key` | для `cloudflare-origin` и `custom`: PEM сертификата (fullchain) и ключа |
+| `--turn-host` | TURN-хост, по умолчанию `turn.<domain>`; **только DNS-only** |
+| `--external-ip` | внешний IPv4, если автоопределение не подходит (NAT) |
+| `--api-base` | адрес сервиса номеров (по умолчанию из `lib/common.sh`, `PM_DEFAULT_API_BASE`) |
+| `--operator-name`, `--operator-email`, `--operator-site` | данные оператора (в диалоге спрашиваются всегда): `operator.json` → страницы `/terms`, `/privacy`, контакт в вебе и ссылки «Сайт / Условия / Политика» в приложениях iOS/macOS/Android, подключённых к вашему серверу |
+| `--operator-terms-url`, `--operator-privacy-url` | свои страницы условий и политики (по умолчанию `https://<domain>/terms`, `/privacy`); только `https://` |
+| `--enable-ufw` | включить ufw (правила добавляются в любом случае, если ufw установлен) |
+| `--cf-only-443` / `--no-cf-only-443` | ufw: порт 443 только для CIDR Cloudflare (список обновляет `pm-cf-update.timer` раз в сутки; порты TURN не ограничиваются). По умолчанию **вкл** для `cloudflare-origin`, **выкл** для `cloudflare-dns`. Действует, только пока ufw включён |
+| `--signer-fingerprint SHA256:…` | сверка отпечатка ключа подписи релиза; die при расхождении или если подпись проверить нельзя |
+| `--force` | разрешить установку версии старее установленной |
+| `--allow-unsigned` | разрешить установку/обновление без проверяемой подписи релиза (небезопасно, см. выше; факт отмечается в `releases.log` и в выводе `status.sh`) |
+| `--skip-key-check` | не проверять ключ запросом к сервису номеров |
+| `--le-staging` | Let's Encrypt staging (для тестов) |
+| `--non-interactive`, `--yes` | без вопросов |
+| `--dry-run`, `--render-dir DIR` | только план; с `--render-dir` — отрендеренные конфиги (nginx, coturn, systemd, env без секретов) |
+
+Повторный запуск безопасен: секреты сохраняются, конфиги пересоздаются (старые — в `*.bak.<время>`), перед
+перезагрузкой nginx проверяется `nginx -t`, после запуска relay проверяется health, при провале восстанавливается
+прежний `env`.
+
+## Режимы TLS и DNS
+
+Приложения принимают только `https://` с сертификатом, который проверяется системными корневыми CA. Self-signed
+сертификат и «свой корневой CA» не подходят. Cloudflare Origin Certificate годится только для оранжевого облака.
+
+| Режим | Сертификат сайта | DNS |
+|---|---|---|
+| `letsencrypt` | Let's Encrypt, HTTP-01 | `msg.example.com` A → IP сервера (DNS only), порт 80 свободен |
+| `cloudflare-dns` | Let's Encrypt, DNS-01 через Cloudflare API | `msg…` может быть проксирован (оранжевое облако) |
+| `cloudflare-origin` | Origin Certificate из дашборда Cloudflare | `msg…` проксирован |
+| `custom` | ваш платный PEM | A → IP сервера |
+
+**TURN-хост всегда DNS-only** (серое облако): Cloudflare не проксирует UDP/STUN. Создайте A-запись
+`turn.<домен>` → IP сервера. Сертификат для `turns:` выпускается отдельно (Let's Encrypt), для Origin Certificate
+`turns:` не используется. Если сертификат не выпущен, остаётся `turn:` на 3478.
+
+### Чек-лист Cloudflare (режимы `cloudflare-*`)
+
+1. Запись сайта — проксируется; запись `turn…` — DNS only.
+2. SSL/TLS → Overview → **Full (strict)**.
+3. Network → **WebSockets: On**.
+4. Cache Rules: **Bypass cache** для `/api/*`.
+5. Edge Certificates → **TLS 1.3: On** (iOS и macOS требуют TLS 1.3).
+6. Ограничьте входящий 443 диапазонами Cloudflare: флаг `--cf-only-443` (для `cloudflare-origin` включён по умолчанию).
+
+## Ключ сервиса номеров
+
+Коды входа отправляет и проверяет сервис номеров владельца проекта. Ключ интеграции выдаётся владельцем вручную
+(укажите домен сервера и контакт). Правила:
+
+- ключ хранится только в `/etc/phantom-messenger/env` (0640 root:phantom); не передавайте его в аргументах команд,
+  не кладите в репозитории и логи;
+- один ключ — один сервер; при переезде на другой хост ключ меняют;
+- ответ `401/403` при входе означает, что ключ отозван или заменён — запросите новый и выполните
+  `sudo ./install.sh --service-key-file <файл>`;
+- лимиты запросов задаёт сервис номеров (по ключу и по IP). Если пользователи получают «слишком часто», обратитесь к владельцу.
+
+## Что установлено
+
+| Что | Где |
+|---|---|
+| Код (root:root, только чтение) | `/opt/phantom-messenger/{backend,client/dist,venv,selfhost}` |
+| Конфигурация и секреты | `/etc/phantom-messenger/env` (0640 root:phantom), `operator.json`, `install.conf`, `ssl/` (0600) |
+| Состояние | `/var/lib/phantom-messenger/state.json` (зашифрован `STATE_ENCRYPTION_KEY`) |
+| Сервисы | `phantom-messenger.service` (пользователь `phantom`, sandbox), `nginx`, `coturn`, `pm-healthcheck.timer` |
+| Журналы relay и coturn | только RAM (namespace `phantom`): `journalctl --namespace=phantom -u phantom-messenger`, `journalctl --namespace=phantom -u coturn`; обычный `journalctl -u …` пуст |
+| nginx | `/etc/nginx/conf.d/phantom-messenger.conf` |
+| TURN | `/etc/turnserver.conf` (квоты: user-quota 60, total-quota 1200, max-bps 1000000) |
+
+Секреты (JWT, TURN, ключи шифрования state/push, ключ аттестации mesh) генерируются при первой установке и в
+терминал не печатаются. **Сохраните копию `/etc/phantom-messenger/env`**: без `STATE_ENCRYPTION_KEY` state не
+прочитать, смена `JWT_SECRET` разлогинивает всех.
+
+## Что видит оператор
+
+Relay хранит сообщения только в RAM до доставки; перезапуск сбрасывает сессии и offline-очередь. На диске —
+публичные ключи, capabilities, push-токены (их у вас нет), отзывы mesh-ключей и блок-листы (файл state, шифруется).
+Оператор технически может видеть:
+
+- IP-адреса клиентов (nginx/relay при обработке соединений, coturn при звонках через TURN);
+- номера, кто кому и когда пишет, размер сообщения (с точностью до корзины), служебные события (typing,
+  квитанции, реакции, правки, удаления);
+- публичные ключи и capabilities, профиль и настройки в RAM;
+- SDP/ICE звонков (включая IP участников) и объём TURN-трафика; номера в mesh-мосте.
+
+Оператор **не** видит содержимое сообщений, голосовых и файлов (end-to-end; файлы идут по DataChannel мимо relay),
+и медиа звонков (TURN ретранслирует шифртекст). Но он может подменить ключ собеседника при первом контакте;
+это выявляется сверкой safety number. Оператор может отказать в обслуживании. Уровень журнала по умолчанию —
+`LOG_LEVEL=WARNING` (без IP и номеров); подробные уровни пишут больше метаданных — включайте осознанно и
+сообщайте об этом пользователям на странице `/privacy`.
+
+## Проверка, обновление, удаление
+
+```bash
+sudo /opt/phantom-messenger/selfhost/status.sh      # сервисы, health, сроки сертификатов, порты
+sudo /opt/phantom-messenger/selfhost/selftest.sh    # снаружи: DNS, TLS 1.3, HTTPS, WebSocket Origin, TURN, ключ номеров
+
+# обновление (архив и SHA256SUMS[.sig] рядом):
+sudo /opt/phantom-messenger/selfhost/update.sh phantom-selfhost-X.Y.Z.tar.gz
+sudo /opt/phantom-messenger/selfhost/update.sh --check
+
+sudo /opt/phantom-messenger/selfhost/uninstall.sh            # сохраняет env, state, сертификаты
+sudo /opt/phantom-messenger/selfhost/uninstall.sh --purge    # удаляет всё, включая секреты и state
+```
+
+`update.sh` проверяет SHA-256 и подпись (подпись обязательна: ключ берётся из установленного `allowed_signers`), сверяет манифест, делает
+бэкапы `backend.bak.*` и `client/dist.bak.*`, перезапускает relay, ждёт health 15 с и при провале откатывается.
+Обновление перезапускает relay: клиенты переподключатся, offline-очередь в RAM сбросится.
+
+Продление сертификата `turns:` (Let's Encrypt, раз в ~60 дней) перезапускает coturn: у coturn нет перечитывания
+сертификата без рестарта, поэтому **активные звонки через TURN в этот момент обрываются** (клиенты переподключаются).
+Продление идёт ночью по таймеру certbot; запас — 30 дней, `pm-healthcheck` предупреждает за 21 день.
+
+Типичные проблемы: `401/403` при входе — ключ номеров (см. выше); «звонок не соединяется» — A-запись `turn.…` за
+Cloudflare или закрыт UDP 3478 / 49152-65535 у провайдера (`selftest.sh`, шаг TURN); WebSocket закрывается —
+не включены WebSockets в Cloudflare или TLS 1.3 выключен.
+
+Режимы `cloudflare-*`: список CIDR Cloudflare хранится в `/etc/phantom-messenger/cf-ips.txt`
+(`TRUSTED_PROXIES_FILE`), раз в сутки `pm-cf-update.timer` обновляет его и, при `--cf-only-443`, правила ufw для 443;
+если список изменился, relay перезапускается, чтобы перечитать его.
+
+## Лицензия
+
+Пакет и код relay распространяются по лицензии **GNU AGPL-3.0** (полный текст — `LICENSE`). Если вы изменяете
+код и предоставляете сервис пользователям по сети, вы обязаны предложить этим пользователям исходный код вашей
+изменённой версии на условиях AGPL-3.0. Запуск без изменений этого не требует, но исходники должны оставаться
+доступными (например, по ссылке на репозиторий проекта на странице вашего сервера).

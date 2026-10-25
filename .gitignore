@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-selfhost/
+__pycache__/
+*.pyc
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+state/
+state.json
+data/
+*.pem
+*.key
+.DS_Store

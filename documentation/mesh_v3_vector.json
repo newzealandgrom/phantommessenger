@@ -1,0 +1,55 @@
+{
+  "spec": "client/src/shared/mesh/wire-spec.md §7, §7.2, §7.3",
+  "signature_session_id_hex": "0000000000000000",
+  "transport_v2": {
+    "key_hex": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+    "session_id_hex": "0102030405060708",
+    "ad_domain": "phantom-mesh-aead:v2\\x00",
+    "replay_window": 1024,
+    "cases": [
+      {
+        "type": 1,
+        "counter": 0,
+        "plaintext_hex": "7b2274657874223a226869222c2276223a317d",
+        "wire_hex": "0000000000000000fb412bb96bfcf527b84090c3c9ab383ffc58c659648259b4cad86f513da8a40f9e3aa0"
+      },
+      {
+        "type": 1,
+        "counter": 1,
+        "plaintext_hex": "7b2274657874223a226869222c2276223a317d",
+        "wire_hex": "00000000000000016961c2087b0017b3e1122bb1c6b4ee4622ee14cca378a923446ca44f6181ad1131760e"
+      },
+      {
+        "type": 22,
+        "counter": 1023,
+        "plaintext_hex": "7b2274657874223a226869222c2276223a317d",
+        "wire_hex": "00000000000003ffa72792679f912346e702aa831a5aa269a3c5aa9a1a870034f4c687b7c767c05a37408b"
+      },
+      {
+        "type": 1,
+        "counter": 4294967301,
+        "plaintext_hex": "7b2274657874223a226869222c2276223a317d",
+        "wire_hex": "00000001000000059fe5eb112a7330c524681e936f93090a57e159a8ccb05b35588af8d3cff542367b6e62"
+      }
+    ]
+  },
+  "room_v1": {
+    "iterations": 100000,
+    "name": "общая",
+    "password": "пароль-123",
+    "room_key_hex": "c62408a3d44bac6d9b62922f116891f5af9234f9251dac7eeddfd445b570b41e",
+    "rid_hex": "9a13ef67ce5650ea49bd5282edd43db8",
+    "enc_key_hex": "4606a33112dab7c8bb4603fc88c2aa6220fdef29907c37599c143ef10b8d0724",
+    "open_room": {
+      "name": "general",
+      "rid_hex": "1b34d3fdfada4c3ab3362f39ad3a79e7"
+    },
+    "message": {
+      "type": 18,
+      "sender_hex": "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+      "nonce_hex": "505152535455565758595a5b",
+      "inner_hex": "7b2274657874223a22d0bfd180d0b8d0b2d0b5d182222c2276223a317d",
+      "payload_hex": "01505152535455565758595a5bc21fde31fda985728e11547d1e05183f4fdb0037023b8229d902e90af6dc0355f14a3373d318618ca61bfc53ac"
+    }
+  }
+}

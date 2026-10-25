@@ -1,0 +1,16 @@
+{
+  "name": "PHANTOM Messenger",
+  "short_name": "PHANTOM",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080a0e",
+  "theme_color": "#080a0e",
+  "description": "Эфемерный E2E-мессенджер для владельцев NFT-номеров",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

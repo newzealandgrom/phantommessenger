@@ -1,0 +1,282 @@
+{
+ "spec": "S10.1 meta1 + S10-ПРАВКИ Q1–Q6",
+ "from": "1001",
+ "to": "1002",
+ "recipient_priv_hex": "0202020202020202020202020202020202020202020202020202020202020202",
+ "recipient_pub_b64": "BFUPRxAD89+Xw99QaseX9nIfsaH7e49vg9IkSYplyI4kE2CT1wEuUJpzcVy9CwCjzA/0tcAbP/oZarH7MnA2uOY=",
+ "key_hex": "dbde9a13eabfc492ed0796da46a7945230aa7284ba0443ba7060d06dd0919466",
+ "ad_hex": "7068616e746f6d2d656e762d61643a323a313030313a31303032",
+ "cases": [
+  {
+   "name": "text_reply_sd_padded",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-1"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "ERERERERERERERER",
+    "iv": "ERERERERERERERER",
+    "cipher": "YUJdqFYs6NQRQUifg3S1q4xhE60cZ2eOTbYYuM6gfp2u+BwfhU4qwNKKGB0QraFwFxD8naMrGXCYfGFWEN7u88Mf1RUY+Yao4x7Qkb0UEgtRUCgJWNduUbLlvxYXdiCOJiRq5JAvTzKnUK0rHuTTvWw9b3t9MW+xZMDKgk19klNaoOpNfrfFRVJ399BloZDsGMoK6iWb4VEtO8oXXvjU2uiWHLf00RHKLUiHkHC/0NM9R0zpJfSVEE0r8vAa+UzbCo6feXDGBz0V61fWX0LdvlwVcyYyXwVtARWCV7bHLSv/SYQKL6nAzF4edhTXDAxu3MNUprXbisE8KEHlfuzPnGlvlB8unSatMaK0icNeeVQ="
+   },
+   "plaintext_hex": "007b226b223a2274657874222c226964223a226d2d31222c2274657874223a22d0bfd180d0b8d0b2d0b5d182206d65746131222c227265706c79546f223a7b226d6573736167654964223a226d2d30222c2266726f6d223a2231303032227d2c227364223a33302c22706164223a222020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020202020227d",
+   "expect": {
+    "action": "show",
+    "k": "text",
+    "id": "m-1",
+    "text": "привет meta1",
+    "replyTo": {
+     "messageId": "m-0",
+     "from": "1002"
+    },
+    "sd": 30,
+    "plaintext_len_multiple_of": 256
+   }
+  },
+  {
+   "name": "file",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-2"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "EhISEhISEhISEhIS",
+    "iv": "EhISEhISEhISEhIS",
+    "cipher": "CWTAwZPPFG0OT4ToQLJtb80WYKgf7VQ5XtHU23ZhtBk6+VrhkKrV3pTRUSbeC5vSF4Y4eGdQWtEurDpu0J+UAynnQpw5eCuEW7PS/Sooq7vtDo11v65RHadCDIAJ3bumUxPx8BK/"
+   },
+   "plaintext_hex": "007b226b223a2266696c65222c226964223a226d2d32222c226e616d65223a2270686f746f2e6a7067222c226d696d65223a22696d6167652f6a706567222c2273697a65223a332c2264617461223a2241514944227d",
+   "expect": {
+    "action": "show",
+    "k": "file",
+    "id": "m-2",
+    "name": "photo.jpg",
+    "mime": "image/jpeg",
+    "size": 3,
+    "data_hex": "010203"
+   }
+  },
+  {
+   "name": "voice",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-3"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "ExMTExMTExMTExMT",
+    "iv": "ExMTExMTExMTExMT",
+    "cipher": "Q+0teCOGvtq5I0IHCERTGEATvG/nVM2rU0hGfcJPjCCpyyXFaD+xb/Mv1zxZHHxAbjFTBqEBxvaxhLbWzRiCSt20GixSVMC/dO0ZP0qZ32GF8N7Nn8qcIA=="
+   },
+   "plaintext_hex": "007b226b223a22766f696365222c226964223a226d2d33222c226d696d65223a22617564696f2f7765626d222c226475724d73223a313530302c2264617461223a2241414543227d",
+   "expect": {
+    "action": "show",
+    "k": "voice",
+    "id": "m-3",
+    "mime": "audio/webm",
+    "durMs": 1500,
+    "data_hex": "000102"
+   }
+  },
+  {
+   "name": "reaction",
+   "outer": {
+    "type": "reaction",
+    "fromNumber": "1001",
+    "messageId": "m-1"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "FBQUFBQUFBQUFBQU",
+    "iv": "FBQUFBQUFBQUFBQU",
+    "cipher": "uhuLollsobGn/AbLL4m8RjeX2/6susKLIajvueWuvro6ltkXJKeroK1Wa6GzFHBAtIDTTVTl2ggiGrjYQB6LC+L+VGtipJjd5olT9CVf"
+   },
+   "plaintext_hex": "007b226b223a227265616374696f6e222c22746172676574223a226d2d31222c22656d6f6a69223a22f09f918d222c2272656d6f7665223a66616c73657d",
+   "expect": {
+    "action": "apply_reaction",
+    "target": "m-1",
+    "emoji": "👍",
+    "remove": false
+   }
+  },
+  {
+   "name": "edit",
+   "outer": {
+    "type": "message_edited",
+    "fromNumber": "1001",
+    "messageId": "m-1"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "FRUVFRUVFRUVFRUV",
+    "iv": "FRUVFRUVFRUVFRUV",
+    "cipher": "o18NIlMDeD5ZQEuivWZ5OuAG6uPBScdD8Dbzn/IDtHfabSMDygjRAymFsoMuWKFAITm9QNuO7odIM0WpNtKofoeWFvylyA=="
+   },
+   "plaintext_hex": "007b226b223a2274657874222c226964223a226d2d31222c2274657874223a22d0b8d181d0bfd180d0b0d0b2d0bbd0b5d0bdd0be227d",
+   "expect": {
+    "action": "edit",
+    "id": "m-1",
+    "text": "исправлено"
+   }
+  },
+  {
+   "name": "neg_legacy_no_nul",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-4"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "FhYWFhYWFhYWFhYW",
+    "iv": "FhYWFhYWFhYWFhYW",
+    "cipher": "3ui82wKilNakb5bmzuhItuyUkD8pFQ+NKr/FQQ=="
+   },
+   "plaintext_hex": "68656c6c6f206c6567616379",
+   "expect": {
+    "action": "show_legacy_text",
+    "text": "hello legacy"
+   }
+  },
+  {
+   "name": "neg_unknown_k",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-5"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "FxcXFxcXFxcXFxcX",
+    "iv": "FxcXFxcXFxcXFxcX",
+    "cipher": "YaVv7UjKF/lZZ/13pXh04GX1/gjObo8EbgLosF7+rjhS8jqT/SmMWA=="
+   },
+   "plaintext_hex": "007b226b223a22706f6c6c222c226964223a226d2d35227d",
+   "expect": {
+    "action": "ignore_no_bubble"
+   }
+  },
+  {
+   "name": "neg_id_mismatch",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-6"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "GBgYGBgYGBgYGBgY",
+    "iv": "GBgYGBgYGBgYGBgY",
+    "cipher": "CMdSdZtRx/LM4vDk3cljJAS6QlOsyg3q5P5tz5ODPXuxVh0VUao4N3a4cJnVrjqb7KtpR6bQYA34AlrloyYl3JVu6A=="
+   },
+   "plaintext_hex": "007b226b223a2274657874222c226964223a226d2d58222c2274657874223a22d0bfd0bed0b4d0bcd0b5d0bdd0b0206964227d",
+   "expect": {
+    "action": "drop"
+   }
+  },
+  {
+   "name": "neg_k_type_mismatch",
+   "outer": {
+    "type": "reaction",
+    "fromNumber": "1001",
+    "messageId": "m-1"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "GRkZGRkZGRkZGRkZ",
+    "iv": "GRkZGRkZGRkZGRkZ",
+    "cipher": "2oA/FEVRwb2iB2UdeKfOQULNJnVmPcc7ApS03ZPQ3uWQX9iEhGbkzry+4fWo978Lotor541LupPk4zOwwUM1E7afFN0p"
+   },
+   "plaintext_hex": "007b226b223a2274657874222c226964223a226d2d31222c2274657874223a22d0bdd0b520d180d0b5d0b0d0bad186d0b8d18f227d",
+   "expect": {
+    "action": "drop"
+   }
+  },
+  {
+   "name": "neg_bad_name",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-7"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "GhoaGhoaGhoaGhoa",
+    "iv": "GhoaGhoaGhoaGhoa",
+    "cipher": "7J8Zzl4tpgUaUL7+Oey6OwmGEL8Q1awJpkzBdIjR5xfXELthrPFfQP4+V2N97oJ+Cbdpm2XyC7aHbWNrHbnqFlpBXJqkpVAqML+xqgrwAp/ppVBceAkUcEGLjUagmVBYdC+E8AB4JPjPTKwLehFuJw=="
+   },
+   "plaintext_hex": "007b226b223a2266696c65222c226964223a226d2d37222c226e616d65223a222e2e2f6574632f5c7530303031706173737764222c226d696d65223a22746578742f706c61696e222c2273697a65223a312c2264617461223a2241413d3d227d",
+   "expect": {
+    "action": "invalid",
+    "display": "[Некорректное сообщение]"
+   }
+  },
+  {
+   "name": "neg_bidi_name",
+   "outer": {
+    "type": "message",
+    "fromNumber": "1001",
+    "messageId": "m-8"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "GxsbGxsbGxsbGxsb",
+    "iv": "GxsbGxsbGxsbGxsb",
+    "cipher": "LeToubcUGsJgbNlc+PLdDixmxFIJJZbddd149+J+N14hWHWJ4vp2aq4jodopiMlX3cxhzXBojfL5YaWzKuiTN26eoUIYKvgVTr5FVbCNRZ6ciRPc4CXHowFJiWCYiJmWX/HxT871+PD6BOn3/TRuJdegOg=="
+   },
+   "plaintext_hex": "007b226b223a2266696c65222c226964223a226d2d38222c226e616d65223a22696e766f696365e280ae6664702e657865222c226d696d65223a226170706c69636174696f6e2f706466222c2273697a65223a312c2264617461223a2241413d3d227d",
+   "expect": {
+    "action": "invalid",
+    "display": "[Некорректное сообщение]"
+   }
+  },
+  {
+   "name": "reaction_zwj_emoji",
+   "outer": {
+    "type": "reaction",
+    "fromNumber": "1001",
+    "messageId": "m-1"
+   },
+   "encryptedBlob": {
+    "version": 2,
+    "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+    "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+    "nonce": "HBwcHBwcHBwcHBwc",
+    "iv": "HBwcHBwcHBwcHBwc",
+    "cipher": "PxXnOw7onWFvHg7IufqiVUllWY3Hfd2U+v7Qt5AcnFY09QS096TK4fn8BVkaBy+H2qC0Y0Vyx/oydvSh6Z5YVqlwjnLICGaOjh5XFG+tx7b2GAWjyoEs"
+   },
+   "plaintext_hex": "007b226b223a227265616374696f6e222c22746172676574223a226d2d31222c22656d6f6a69223a22e29da4efb88fe2808df09f94a5222c2272656d6f7665223a66616c73657d",
+   "expect": {
+    "action": "apply_reaction",
+    "target": "m-1",
+    "emoji": "❤️‍🔥",
+    "remove": false
+   }
+  }
+ ]
+}

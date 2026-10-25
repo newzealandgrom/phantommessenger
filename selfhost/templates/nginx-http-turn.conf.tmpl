@@ -1,0 +1,19 @@
+
+# TURN-хост (DNS-only): :80 нужен только для выпуска сертификата turns:.
+server {
+    listen 80;
+    @@LISTEN6_80@@
+    server_name @@TURN_HOST@@;
+
+    server_tokens off;
+    access_log off;
+    error_log /var/log/nginx/phantom-messenger-error.log crit;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root @@ACME_ROOT@@;
+        default_type text/plain;
+    }
+    location / {
+        return 404;
+    }
+}

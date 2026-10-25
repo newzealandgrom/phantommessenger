@@ -1,0 +1,4 @@
+# Ключ подписи релизов (формат ssh-keygen allowed_signers). update.sh проверяет SHA256SUMS.sig по этому файлу.
+# Одна строка на ключ. Отпечаток текущего ключа: SHA256:SJIk2s8G8DM1FTJP4KB7gVfqU+oVBvk+PhwZMtpFMkY
+# Подпись: ssh-keygen -Y sign -f <приватный ключ> -n phantom-selfhost SHA256SUMS   (делает scripts/build-selfhost-release.sh --sign-key)
+phantom-release namespaces="phantom-selfhost" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPou3Hmk957h7nid4gK7GVpBBWWpxjCvVRgezwBOqWEF

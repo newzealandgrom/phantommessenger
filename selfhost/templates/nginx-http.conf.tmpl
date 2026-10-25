@@ -1,0 +1,20 @@
+# Managed by phantom-selfhost install.sh — правки теряются при повторном запуске установщика.
+# :80 — только ACME HTTP-01 и редирект на https. Метаданные клиентов не пишем: access_log выключен.
+
+server {
+    listen 80;
+    @@LISTEN6_80@@
+    server_name @@DOMAIN@@;
+
+    server_tokens off;
+    access_log off;
+    error_log /var/log/nginx/phantom-messenger-error.log crit;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root @@ACME_ROOT@@;
+        default_type text/plain;
+    }
+    location / {
+        return 301 https://@@DOMAIN@@$request_uri;
+    }
+}

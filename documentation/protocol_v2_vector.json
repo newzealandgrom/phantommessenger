@@ -1,0 +1,83 @@
+{
+ "from": "1001",
+ "to": "1002",
+ "plaintext": "hello v2",
+ "nonce_hex": "000102030405060708090a0b",
+ "keys": {
+  "id_A": {
+   "priv_hex": "0101010101010101010101010101010101010101010101010101010101010101",
+   "pub_b64": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+   "x": "b_A7lJJBzh2t1DUZ5pYOCoW0GmmgXDKBA6orzhWUyhY",
+   "y": "PE91OlW_AdxT9sCwx-7ni0DG_30lqW4igrmJzvccFEo"
+  },
+  "id_B": {
+   "priv_hex": "0202020202020202020202020202020202020202020202020202020202020202",
+   "pub_b64": "BFUPRxAD89+Xw99QaseX9nIfsaH7e49vg9IkSYplyI4kE2CT1wEuUJpzcVy9CwCjzA/0tcAbP/oZarH7MnA2uOY=",
+   "x": "VQ9HEAPz35fD31Bqx5f2ch-xoft7j2-D0iRJimXIjiQ",
+   "y": "E2CT1wEuUJpzcVy9CwCjzA_0tcAbP_oZarH7MnA2uOY"
+  },
+  "eph_A": {
+   "priv_hex": "0303030303030303030303030303030303030303030303030303030303030303",
+   "pub_b64": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+   "x": "WRq3ceu8_W2cuQlNEGUordGmnUTCwfYn8InsWLnGGt8",
+   "y": "n05qvw0EXAxpOjxorXyXynK-ZN70om_s0mPdmKkngPA"
+  },
+  "id_X_wrong": {
+   "priv_hex": "0404040404040404040404040404040404040404040404040404040404040404",
+   "pub_b64": "BHMQPsMLPM9X2q4I6TU0rvFEo1lAz2u7oSoM98vV1lpk2CyMmenTxF+SRbqbJ5gsmuqOwduUsZxEeVlCwOsiqjI="
+  }
+ },
+ "intermediate": {
+  "ss1_hex": "485b121f6e24068c738723b2150bb60a472d7aa608a250d5a5646a28c5604515",
+  "ss2_hex": "eb459a6b30d70eb4c0ddcd34ea96ed59e8f8d1843c22dd895ab603aa13d9a81d",
+  "salt_hex": "625fbf5bf909e3cbab37f94ea0cfef820a0c9887f9f014d7f245e49402ad74f0",
+  "info_hex": "7068616e746f6d2d656e763a323a313030313a31303032046ff03b949241ce1dadd43519e6960e0a85b41a69a05c328103aa2bce1594ca163c4f753a55bf01dc53f6c0b0c7eee78b40c6ff7d25a96e2282b989cef71c144a04550f471003f3df97c3df506ac797f6721fb1a1fb7b8f6f83d224498a65c88e24136093d7012e509a73715cbd0b00a3cc0ff4b5c01b3ffa196ab1fb327036b8e604591ab771ebbcfd6d9cb9094d106528add1a69d44c2c1f627f089ec58b9c61adf9f4e6abf0d045c0c693a3c68ad7c97ca72be64def4a26fecd263dd98a92780f0",
+  "ad_hex": "7068616e746f6d2d656e762d61643a323a313030313a31303032",
+  "key_hex": "dbde9a13eabfc492ed0796da46a7945230aa7284ba0443ba7060d06dd0919466"
+ },
+ "blob_v2": {
+  "version": 2,
+  "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+  "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+  "nonce": "AAECAwQFBgcICQoL",
+  "iv": "AAECAwQFBgcICQoL",
+  "cipher": "ukgQvhlob2E8vY6mLfQJE3OBrzfc2GGo"
+ },
+ "negative_g_wrong_identity": {
+  "blob": {
+   "version": 2,
+   "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+   "senderIdentityKey": "BHMQPsMLPM9X2q4I6TU0rvFEo1lAz2u7oSoM98vV1lpk2CyMmenTxF+SRbqbJ5gsmuqOwduUsZxEeVlCwOsiqjI=",
+   "nonce": "AAECAwQFBgcICQoL",
+   "iv": "AAECAwQFBgcICQoL",
+   "cipher": "ukgQvhlob2E8vY6mLfQJE3OBrzfc2GGo"
+  },
+  "expect": "gcm_fail"
+ },
+ "negative_d_swapped_numbers": {
+  "from": "1002",
+  "to": "1001",
+  "blob": {
+   "version": 2,
+   "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+   "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+   "nonce": "AAECAwQFBgcICQoL",
+   "iv": "AAECAwQFBgcICQoL",
+   "cipher": "ukgQvhlob2E8vY6mLfQJE3OBrzfc2GGo"
+  },
+  "expect": "gcm_fail"
+ },
+ "v1_regression": {
+  "note": "key=SHA256(ECDH(static_B,eph)||'direct:from:to'), AD='msg:from:to' \u2014 \u0441\u0432\u0435\u0440\u0438\u0442\u044c \u0441 \u0440\u0435\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u0435\u0439 v1",
+  "plaintext": "hello v1",
+  "blob": {
+   "version": 1,
+   "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+   "nonce": "AAECAwQFBgcICQoL",
+   "iv": "AAECAwQFBgcICQoL",
+   "cipher": "gZtLCCruFNgg/ddOjb1sHN0vxsMMWsNv"
+  },
+  "key_hex": "608a47aa255739082b06253d56a5828a39e2bebb8701ffb727b0fbf2177006c1"
+ },
+ "fingerprint_id_A": "256b1be32745d1d1c9d49121cc87bc45"
+}

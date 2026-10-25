@@ -1,0 +1,27 @@
+{
+  "spec": "phantom-call-sas-v1 — client/src/lib/callSas.ts; fp = первая a=fingerprint:sha-256 из SDP без ':' в верхнем регистре; x,y = sort(fpLocal, fpRemote); code = uint32be(SHA-256('phantom-call-sas-v1|'+x+'|'+y)[0..4]) mod 1e6, 'ddd ddd'",
+  "cases": [
+    {
+      "name": "normal",
+      "localSdp": "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=fingerprint:sha-256 A1:B2:C3:D4:E5:F6:07:18:29:3A:4B:5C:6D:7E:8F:90:01:12:23:34:45:56:67:78:89:9A:AB:BC:CD:DE:EF:F0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n",
+      "remoteSdp": "v=0\r\no=- 3 4 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 0f:1e:2d:3c:4b:5a:69:78:87:96:a5:b4:c3:d2:e1:f0:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff\r\n",
+      "fpLocal": "A1B2C3D4E5F60718293A4B5C6D7E8F900112233445566778899AABBCCDDEEFF0",
+      "fpRemote": "0F1E2D3C4B5A69788796A5B4C3D2E1F000112233445566778899AABBCCDDEEFF",
+      "code": "873 386"
+    },
+    {
+      "name": "symmetric (другая сторона)",
+      "localSdp": "v=0\r\no=- 3 4 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\na=fingerprint:sha-256 0f:1e:2d:3c:4b:5a:69:78:87:96:a5:b4:c3:d2:e1:f0:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff\r\n",
+      "remoteSdp": "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=fingerprint:sha-256 A1:B2:C3:D4:E5:F6:07:18:29:3A:4B:5C:6D:7E:8F:90:01:12:23:34:45:56:67:78:89:9A:AB:BC:CD:DE:EF:F0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n",
+      "fpLocal": "0F1E2D3C4B5A69788796A5B4C3D2E1F000112233445566778899AABBCCDDEEFF",
+      "fpRemote": "A1B2C3D4E5F60718293A4B5C6D7E8F900112233445566778899AABBCCDDEEFF0",
+      "code": "873 386"
+    },
+    {
+      "name": "mitm: relay подменил отпечаток B на M у A",
+      "fpLocal": "A1B2C3D4E5F60718293A4B5C6D7E8F900112233445566778899AABBCCDDEEFF0",
+      "fpRemote": "FFEEDDCCBBAA99887766554433221100F0E1D2C3B4A5968778695A4B3C2D1E0F",
+      "code": "956 736"
+    }
+  ]
+}

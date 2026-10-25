@@ -1,0 +1,83 @@
+{
+  "identity": {
+    "name": "Phantom Messenger",
+    "tagline": "Exist only in the moment."
+  },
+  "copy": {
+    "authTitle": "Вход по Phantom Number",
+    "authHint": "Код приходит в личный кабинет номера",
+    "securityAlgorithm": "E2E: ECDH P-256 + AES-256-GCM",
+    "storageModel": "Только в памяти текущей сессии"
+  },
+  "typography": {
+    "bodyFamily": "Figtree",
+    "displayFamily": "Figtree",
+    "monoFamily": "SF Mono",
+    "bodyBasePx": 14,
+    "supportingPx": 13,
+    "metaPx": 12
+  },
+  "motion": {
+    "fastMs": 120,
+    "baseMs": 220,
+    "slowMs": 350,
+    "cardEnterMs": 500
+  },
+  "radii": {
+    "xs": 8,
+    "sm": 14,
+    "md": 18,
+    "lg": 24,
+    "full": 9999
+  },
+  "palette": {
+    "dark": {
+      "void": "#050510",
+      "glass": "rgba(15,15,25,0.45)",
+      "glassMid": "rgba(16,16,26,0.65)",
+      "glassStrong": "rgba(14,14,22,0.75)",
+      "glassHover": "rgba(255,255,255,0.06)",
+      "glassSubtle": "rgba(255,255,255,0.03)",
+      "text1": "rgba(255,255,255,0.88)",
+      "text2": "rgba(255,255,255,0.50)",
+      "text3": "rgba(255,255,255,0.25)",
+      "accent": "#6ea8fe",
+      "accent2": "#a78bfa",
+      "accentDim": "rgba(110,168,254,0.10)",
+      "green": "#4ade80",
+      "danger": "#fb7185",
+      "border": "rgba(255,255,255,0.06)",
+      "overlay": "rgba(0,0,0,0.60)",
+      "readColor": "#6ea8fe",
+      "bubbleIn": "rgba(255,255,255,0.04)",
+      "bubbleInBorder": "rgba(255,255,255,0.06)",
+      "bubbleOutStart": "rgba(100,110,220,0.20)",
+      "bubbleOutEnd": "rgba(140,100,200,0.14)",
+      "bubbleOutBorder": "rgba(110,168,254,0.08)"
+    },
+    "light": {
+      "void": "#f3eee9",
+      "glass": "rgba(255,255,255,0.92)",
+      "glassMid": "rgba(255,255,255,0.96)",
+      "glassStrong": "#ffffff",
+      "glassHover": "rgba(0,0,0,0.07)",
+      "glassSubtle": "rgba(255,255,255,0.85)",
+      "text1": "rgba(0,0,0,0.92)",
+      "text2": "rgba(0,0,0,0.62)",
+      "text3": "rgba(0,0,0,0.42)",
+      "accent": "#5b4fc7",
+      "accent2": "#7c6dd8",
+      "accentDim": "rgba(91,79,199,0.14)",
+      "green": "#15803d",
+      "danger": "#be123c",
+      "border": "rgba(0,0,0,0.14)",
+      "overlay": "rgba(0,0,0,0.45)",
+      "readColor": "#5b4fc7",
+      "bubbleIn": "#ffffff",
+      "bubbleInBorder": "rgba(0,0,0,0.10)",
+      "bubbleOutStart": "rgba(91,79,199,0.22)",
+      "bubbleOutEnd": "rgba(124,109,216,0.16)",
+      "bubbleOutBorder": "rgba(91,79,199,0.18)"
+    }
+  }
+}

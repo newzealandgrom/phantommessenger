@@ -1,0 +1,14 @@
+#!/bin/bash
+# Managed by phantom-selfhost. coturn работает от непривилегированного turnserver и не читает
+# /etc/letsencrypt/archive — копию кладёт этот хук при каждом обновлении сертификата @@TURN_HOST@@.
+set -euo pipefail
+LIVE="/etc/letsencrypt/live/@@TURN_HOST@@"
+DEST="/etc/coturn/certs"
+if [[ -n "${RENEWED_LINEAGE:-}" && "${RENEWED_LINEAGE}" != "${LIVE}" ]]; then
+  exit 0
+fi
+[[ -f "${LIVE}/fullchain.pem" ]] || exit 0
+install -d -m 0750 -o root -g turnserver "${DEST}"
+install -m 0640 -o root -g turnserver "${LIVE}/fullchain.pem" "${DEST}/fullchain.pem"
+install -m 0640 -o root -g turnserver "${LIVE}/privkey.pem"   "${DEST}/privkey.pem"
+systemctl restart coturn

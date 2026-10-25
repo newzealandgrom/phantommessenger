@@ -1,0 +1,11 @@
+[Unit]
+Description=Phantom Messenger: update Cloudflare CIDR list (TRUSTED_PROXIES_FILE, ufw 443)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pm-cf-update.sh
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes

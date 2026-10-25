@@ -1,0 +1,120 @@
+{
+  "spec": "documentation/PROTOCOL_P2P_V2.md §4",
+  "from": "1001",
+  "to": "1002",
+  "file": {
+    "name": "vector.txt",
+    "mime": "text/plain",
+    "size": 40,
+    "plaintext_hex": "5068616e746f6d205032502066696c6520766563746f7220763120d0bfd180d0b8d0b2d0b5d18221",
+    "sha256_hex": "486107531697b465b4eb1b2de03293186e3b835369d04b8b737f250402c32906"
+  },
+  "params": {
+    "fileId_hex": "0f0e0d0c0b0a09080706050403020100",
+    "key_hex": "101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f",
+    "nonceBase_hex": "a0a1a2a3a4a5a6a7",
+    "chunk": 16,
+    "chunk_count": 3,
+    "ad_prefix_utf8": "phantom-p2p-file:1:1001:1002",
+    "frame_layout": "fileId(16) || ctr(4 BE) || AES-256-GCM(key, nonceBase||ctr, plaintext, AD) || tag(16)"
+  },
+  "file_offer": {
+    "wire": {
+      "type": "file_offer",
+      "messageId": "f-1",
+      "fileId": "0f0e0d0c0b0a09080706050403020100",
+      "encryptedBlob": {
+        "version": 2,
+        "senderPublicKey": "BFkat3HrvP1tnLkJTRBlKK3Rpp1EwsH2J/CJ7Fi5xhrfn05qvw0EXAxpOjxorXyXynK+ZN70om/s0mPdmKkngPA=",
+        "senderIdentityKey": "BG/wO5SSQc4drdQ1GeaWDgqFtBppoFwygQOqK84VlMoWPE91OlW/AdxT9sCwx+7ni0DG/30lqW4igrmJzvccFEo=",
+        "nonce": "ISEhISEhISEhISEh",
+        "iv": "ISEhISEhISEhISEh",
+        "cipher": "L2cPbZqM7gsAWvmgcXOeFr2iNRsSC7pfVVu3VS+ZTaORQzqo1selLfBusUeAgWItOndY9+6yWFjzPWbgT6ROgQ3FeKWBl+xyg6n/uuu/PP6bcSgZOiGDLiMrUIGt5QdO6Dcqjnn7xXcMONgTgN+mUGALoXlV7V9PlSW5VcNKKfcrrPiX9Uhvic4I6bCckzvGaCx9bVjXOVQKl8f5JqKpNAPjFeN0EZgMCVI6pCOiuMUcXy+FyuXeCeFA+1fChpeJLqs165Ii293WHL2/YPwAwtC9/6xMqhwOgYkq1lEWTbYKGwsQLD+gODkRyxMcVQkJyRMmm4PEwmr7gwtfaH+vCk2VNY4RnPI8XAqBBpn//f/Yh6hcdEEHzVKmYLhzZJMIxBU33QDAYyU72nuYeHVMQ5yZ9prLmug9YtopenvvKsloz80rOP0G0U6LPJXvEBIC3HKuldVot6OG"
+      }
+    },
+    "plaintext_json": {
+      "k": "file_offer",
+      "id": "f-1",
+      "fileId": "0f0e0d0c0b0a09080706050403020100",
+      "name": "vector.txt",
+      "mime": "text/plain",
+      "size": 40,
+      "sha256": "486107531697b465b4eb1b2de03293186e3b835369d04b8b737f250402c32906",
+      "key": "EBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8=",
+      "nonceBase": "oKGio6Slpqc=",
+      "chunk": 16,
+      "text": "подпись к файлу"
+    },
+    "plaintext_hex": "007b226b223a2266696c655f6f66666572222c226964223a22662d31222c2266696c654964223a223066306530643063306230613039303830373036303530343033303230313030222c226e616d65223a22766563746f722e747874222c226d696d65223a22746578742f706c61696e222c2273697a65223a34302c22736861323536223a2234383631303735333136393762343635623465623162326465303332393331383665336238333533363964303462386237333766323530343032633332393036222c226b6579223a2245424553457851564668635947526f62484230654879416849694d6b4a53596e4b436b714b7977744c69383d222c226e6f6e636542617365223a226f4b47696f36536c7071633d222c226368756e6b223a31362c2274657874223a22d0bfd0bed0b4d0bfd0b8d181d18c20d0ba20d184d0b0d0b9d0bbd183227d",
+    "envelope_note": "ключ/AD конверта = protocol_v2_vector.json intermediate (получатель id_B); nonce 0x21*12"
+  },
+  "chunks": [
+    {
+      "ctr": 0,
+      "plaintext_hex": "5068616e746f6d205032502066696c65",
+      "nonce_hex": "a0a1a2a3a4a5a6a700000000",
+      "ad_hex": "7068616e746f6d2d7032702d66696c653a313a313030313a313030320f0e0d0c0b0a0908070605040302010000000000",
+      "frame_hex": "0f0e0d0c0b0a0908070605040302010000000000032753ecad1169186634cdb9331412d1de13b2853ba5331a328a318c074417e8",
+      "frame_len": 52
+    },
+    {
+      "ctr": 1,
+      "plaintext_hex": "20766563746f7220763120d0bfd180d0",
+      "nonce_hex": "a0a1a2a3a4a5a6a700000001",
+      "ad_hex": "7068616e746f6d2d7032702d66696c653a313a313030313a313030320f0e0d0c0b0a0908070605040302010000000001",
+      "frame_hex": "0f0e0d0c0b0a0908070605040302010000000001df242e3cf22556075f4b3274e3d925632856c62bed2fbadb9f3e0460f789b465",
+      "frame_len": 52
+    },
+    {
+      "ctr": 2,
+      "plaintext_hex": "b8d0b2d0b5d18221",
+      "nonce_hex": "a0a1a2a3a4a5a6a700000002",
+      "ad_hex": "7068616e746f6d2d7032702d66696c653a313a313030313a313030320f0e0d0c0b0a0908070605040302010000000002",
+      "frame_hex": "0f0e0d0c0b0a0908070605040302010000000002d4a3335d76bc8b5f8395ac8789f3720abcd912ded76bc627",
+      "frame_len": 44
+    }
+  ],
+  "control_frames_after_chunks": [
+    {
+      "type": "file_end",
+      "fileId": "0f0e0d0c0b0a09080706050403020100"
+    },
+    {
+      "type": "file_done",
+      "fileId": "0f0e0d0c0b0a09080706050403020100",
+      "messageId": "f-1"
+    }
+  ],
+  "chunk_64k_zero": {
+    "ctr": 0,
+    "plaintext": "65536 x 0x00",
+    "frame_len": 65572,
+    "frame_sha256_hex": "d235b06e84a2f474a7156e98bf747f6c6b5841cf9db990967b87c371e8132248"
+  },
+  "negative": {
+    "wrong_ctr_in_header": {
+      "frame_hex": "0f0e0d0c0b0a0908070605040302010000000001032753ecad1169186634cdb9331412d1de13b2853ba5331a328a318c074417e8",
+      "expect": "GCM fail -> file_abort invalid"
+    },
+    "chunk_of_other_file": {
+      "frame_hex": "0f0e0d0c0b0a0908070605040302010000000000032753ecad1169186634cdb9331412d1e75339131a85b2b7514bad29c57542a9",
+      "other_fileId_hex": "ffeeddccbbaa99887766554433221100",
+      "expect": "GCM fail -> file_abort invalid"
+    },
+    "swapped_numbers_in_ad": {
+      "frame_hex": "0f0e0d0c0b0a0908070605040302010000000000032753ecad1169186634cdb9331412d13d81ba9d36b7eb050a8b93e1af06d9a4",
+      "expect": "GCM fail при AD from=1001,to=1002"
+    },
+    "truncated_transfer": {
+      "frames": [
+        "0f0e0d0c0b0a0908070605040302010000000000032753ecad1169186634cdb9331412d1de13b2853ba5331a328a318c074417e8",
+        "0f0e0d0c0b0a0908070605040302010000000001df242e3cf22556075f4b3274e3d925632856c62bed2fbadb9f3e0460f789b465"
+      ],
+      "then": {
+        "type": "file_end",
+        "fileId": "0f0e0d0c0b0a09080706050403020100"
+      },
+      "expect": "received 2 != chunk_count 3 -> file_abort protocol; sha256 не считать"
+    }
+  }
+}
