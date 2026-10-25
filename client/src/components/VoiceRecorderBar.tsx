@@ -45,6 +45,9 @@ const HOLD_MS = 300;       // удержание дольше = жест «за�
 const CANCEL_DX = 100;     // влево за порог — отмена
 const LOCK_DY = 80;        // вверх за порог — «без рук» (сенсор)
 const LIMIT_MARGIN = 2048; // запас до лимита, байт (§2.4: ≥ 2 КиБ)
+// Потолок длительности звука (без пауз): получатели отвергают голосовые > 300 000 мс по TOC
+// (PROTOCOL_VOICE_V2 §5, maxDecodeMs), а при тихом входе VBR файл в 140 КиБ может быть длиннее 300 с.
+const MAX_RECORD_MS = 290_000;
 const LEVEL_STEP_MS = 55;  // период отсчётов волны
 
 function fmt(ms: number): string {
@@ -387,10 +390,13 @@ export default function VoiceRecorderBar({ maxBytes, hold, interrupted, onSend, 
   useEffect(() => {
     if (status !== "rec") return;
     const id = window.setInterval(() => {
-      setElapsed(accRef.current + (segRef.current ? performance.now() - segRef.current : 0));
+      const el = accRef.current + (segRef.current ? performance.now() - segRef.current : 0);
+      setElapsed(el);
+      // Автостоп по длительности — тем же путём, что и по размеру
+      if (el >= MAX_RECORD_MS) void haltToDraft("voice.limit");
     }, 100);
     return () => window.clearInterval(id);
-  }, [status]);
+  }, [status, haltToDraft]);
 
   // ── Волна ──
   useEffect(() => {

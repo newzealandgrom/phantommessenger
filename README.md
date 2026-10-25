@@ -69,7 +69,8 @@ sudo /opt/phantom-messenger/selfhost/selftest.sh   # снаружи: DNS, TLS 1.
 
 Коды входа отправляет сервис номеров Phantom Numbers (phantomnumbers.org). Ключ интеграции выдаётся **автоматически** при установке
 (после подтверждения владения доменом); коды для ваших пользователей приходят с пометкой «сторонний сервер». Лимиты для сторонних серверов
-жёсткие; если нужен больший лимит — напишите на admin@phantommessenger.org и укажите домен. Подробности — в
+жёсткие; если нужен больший лимит — напишите на admin@phantommessenger.org и укажите домен. Сервер, который 3 суток не отвечает и не
+запрашивает коды, снимается с регистрации автоматически (вернуться — команда установки с флагом `--reregister`). Подробности — в
 [selfhost/README.md](selfhost/README.md#ключ-сервиса-номеров).
 
 ### Обновление и удаление
@@ -171,7 +172,8 @@ Open `https://your-domain` in a browser - the web client should load. In the app
 
 Login codes are delivered by the Phantom Numbers service (phantomnumbers.org). The integration key is issued **automatically** during
 installation (after you prove domain ownership); codes for your users carry a "third-party server" note. Limits for third-party servers are
-strict; for a higher limit write to admin@phantommessenger.org with your domain. Details: [selfhost/README.en.md](selfhost/README.en.md).
+strict; for a higher limit write to admin@phantommessenger.org with your domain. A server that does not answer and requests no codes for
+3 days is unregistered automatically (to come back, run the install command with `--reregister`). Details: [selfhost/README.en.md](selfhost/README.en.md).
 
 ### Update and uninstall
 

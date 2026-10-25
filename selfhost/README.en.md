@@ -149,6 +149,14 @@ numbers service owner can list third-party servers and block a domain (and its s
 disappear. For a large server (higher limits) ask the owner for a regular key at admin@phantommessenger.org and pass it with
 `--service-key-file`.
 
+**Availability check.** Once a day the numbers service opens `https://<domain>/api/health`. If the server does not answer for 3 days in a row and requested no codes during that time, its registration is removed automatically: the key stops working, the domain is not blocked. To register again, run the install command with `--reregister`:
+
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzealandgrom/phantommessenger/main/selfhost/get.sh)" -- --reregister
+```
+
+If Cloudflare bot protection sits in front of your server, do not block `/api/health` for it. The numbers service owner can temporarily close registration of new third-party servers or switch them off entirely.
+
 Rules:
 - the key lives only in `/etc/phantom-messenger/env`; never put it in command arguments, repositories or logs;
 - repeated `install.sh` and `update.sh` keep the key and do not register again; `--reregister` issues a new key (the old one is revoked);
