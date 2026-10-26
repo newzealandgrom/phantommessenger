@@ -26,7 +26,7 @@ fi
 _xt="$-"; set +x
 key_val="$(read_env_value NFT_NUMBERS_SERVICE_SECRET "$PM_ENV_FILE" 2>/dev/null || true)"
 if [[ -z "$key_val" || "$key_val" == "$PM_NO_KEY_PLACEHOLDER" ]]; then
-  if [[ -r "$PM_ENV_FILE" ]]; then bad "ключ номеров: не получен (вход по кодам не работает) - sudo $PM_OPT/selfhost/install.sh --reregister"
+  if [[ -r "$PM_ENV_FILE" ]]; then bad "ключ номеров: не получен (вход по кодам не работает) - повторите установку той же командой или sudo $PM_OPT/selfhost/install.sh --reregister"
   else print_info "ключ номеров: env недоступен (нужен root)"; fi
 else
   case "$(conf_get KEY_SOURCE)" in

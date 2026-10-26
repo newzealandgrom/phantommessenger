@@ -97,7 +97,7 @@ token): the installer copies them into `/etc/phantom-messenger` (0600/0640), the
 (`shred -u file`). Only release files are copied into `/opt/phantom-messenger/selfhost`.
 
 Main flags (`./install.sh --help` lists all): `--domain`, `--tls letsencrypt|cloudflare-dns|cloudflare-origin|custom`,
-`--email`, `--service-key-file` (a manual key: disables automatic registration; or `PM_SERVICE_KEY`; `--service-key` is visible in `ps`), `--no-autoregister` (do not register; without a key the install ends with a warning and sign-in codes will not work), `--reregister` (register again: a new key, the old one stops working), `--cf-api-token-file`
+`--email`, `--service-key-file` (a manual key: disables automatic registration; or `PM_SERVICE_KEY`; `--service-key` is visible in `ps`), `--no-autoregister` (do not register; without a key the install ends with a warning and sign-in codes will not work), `--reregister` (manual key rotation: a new key, the old one stops working; not needed after the server was unregistered - see below), `--cf-api-token-file`
 (Zone:DNS:Edit token, for `cloudflare-dns`), `--origin-cert`/`--origin-key` (for `cloudflare-origin` and `custom`),
 `--turn-host` (default `turn.<domain>`, **DNS-only**), `--external-ip`, `--api-base`, `--operator-name`,
 `--operator-email`, `--operator-site` (asked in the dialog; written to `operator.json`: shown on `/terms` and `/privacy` and in the iOS/macOS/Android apps connected to your server), `--operator-terms-url`/`--operator-privacy-url` (default `https://<domain>/terms`, `/privacy`), `--enable-ufw`, `--skip-key-check`,
@@ -149,25 +149,27 @@ numbers service owner can list third-party servers and block a domain (and its s
 disappear. For a large server (higher limits) ask the owner for a regular key at admin@phantommessenger.org and pass it with
 `--service-key-file`.
 
-**Availability check.** Once a day the numbers service opens `https://<domain>/api/health`. If the server does not answer for 3 days in a row and requested no codes during that time, its registration is removed automatically: the key stops working, the domain is not blocked. To register again, run the install command with `--reregister`:
+**Availability check.** Once a day the numbers service opens `https://<domain>/api/health`. If the server does not answer for 3 days in a row and requested no codes during that time, its registration is removed automatically: the key stops working, the domain is not blocked. Since version 0.1.1 it is enough to run the install command again: the installer sees that the auto-registration key was revoked (HTTP 401/403) and registers the server again (`--reregister` is only for manual rotation of a working key):
 
 ```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzealandgrom/phantommessenger/main/selfhost/get.sh)" -- --reregister
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzealandgrom/phantommessenger/main/selfhost/get.sh)"
 ```
+
+A manual key (`--service-key-file`) is never replaced on 401/403: the install stops with an error. If the service has closed (503 `selfhost_registration_closed`) or switched off (503 `selfhost_disabled`) third-party servers, or the server is blocked, the installer says so - write to admin@phantommessenger.org.
 
 If Cloudflare bot protection sits in front of your server, do not block `/api/health` for it. The numbers service owner can temporarily close registration of new third-party servers or switch them off entirely.
 
 Rules:
 - the key lives only in `/etc/phantom-messenger/env`; never put it in command arguments, repositories or logs;
-- repeated `install.sh` and `update.sh` keep the key and do not register again; `--reregister` issues a new key (the old one is revoked);
+- repeated `install.sh` and `update.sh` keep a working key and do not register again (`install.sh` replaces a revoked auto-registration key by itself); `--reregister` issues a new key (the old one is revoked);
 - if registration fails (registration disabled by the service - 503, registration rate limit 5/h per IP, the file could not be
   fetched because of DNS/firewall/cache, domain blocked) the install still finishes and the relay starts, but sign-in codes will not
-  work; fix the cause and run `sudo ./install.sh --reregister` (same options);
+  work; fix the cause and run the install again (same options); with `--non-interactive` the install then exits with code 3 (not 0);
 - in `cloudflare-*` modes add a Cache Rule "Bypass cache" for `/.well-known/phantom-numbers/*` (otherwise Cloudflare may serve the numbers
   service a cached response);
 - domains on free hosting or DDNS (github.io, duckdns, etc.) are not accepted by the numbers service (`domain_not_allowed`) - use your own domain;
 - `--reregister` refuses when a manual key is installed (so it is not replaced by a key with the strict third-party limits); only `--force` overrides;
-- HTTP `401/403` on sign-in means the key was revoked, replaced or the domain is blocked - run `--reregister` or ask the owner;
+- HTTP `401/403` on sign-in means the key was revoked, replaced or the domain is blocked - run the install again (auto-registration key) or ask the owner;
 - `status.sh` shows the key source ("auto-registration" or "manual"), `selftest.sh` checks the key itself.
 
 ## What is installed

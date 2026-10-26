@@ -328,14 +328,56 @@ relay_start() {
   exit 1
 }
 
+# Поле error ответа сервиса номеров (недоверенный ввод, stdin): верхний уровень или detail.error (HTTPException FastAPI).
+# В вывод - только безопасные символы, не более 64 (как autoreg_clean); фильтр в Python - без SIGPIPE под pipefail.
+relay_key_error() {
+  python3 -I -c '
+import json, re, sys
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    d = None
+v = None
+if isinstance(d, dict):
+    v = d.get("error")
+    if not isinstance(v, str) and isinstance(d.get("detail"), dict):
+        v = d["detail"].get("error")
+print(re.sub(r"[^A-Za-z0-9_.-]", "", v)[:64] if isinstance(v, str) else "")
+' 2>/dev/null || true
+}
+
+# Решение по ответу проверки ключа (чистая функция, без сети и без побочных эффектов):
+#   key_check_decision <источник ключа> <HTTP-код> <error> <no_autoregister 0|1>
+# Источник: selfhost (ключ авторегистрации из install.conf) | manual | fresh (ключ только что выдан авторегистрацией).
+# Печатает действие: ok | reregister | rejected | noautoreg | disabled | limited | unreachable | unexpected.
+# 401/403 сервис отдаёт и для отозванного/снятого, и для заблокированного сервера (неразличимо); ключ авторегистрации
+# в этом случае перерегистрируется (заблокированному домену сервис откажет на verify), ручной ключ молча не подменяется.
+key_check_decision() {
+  local src="$1" http="$2" err="$3" no_autoreg="${4:-0}"
+  case "$http" in
+    422|400) echo ok ;;
+    401|403)
+      if [[ "$src" != "selfhost" ]]; then echo rejected
+      elif [[ "$no_autoreg" == "1" ]]; then echo noautoreg
+      else echo reregister; fi ;;
+    503) if [[ "$err" == "selfhost_disabled" ]]; then echo disabled; else echo unexpected; fi ;;
+    429) echo limited ;;
+    000) echo unreachable ;;
+    *)   echo unexpected ;;
+  esac
+}
+
 # Проверка ключа сервиса номеров: POST /api/verify-code с пустым телом.
-#   422 — ключ принят; 401/403 — ключ неверен/отозван; прочее — предупреждение.
+#   422 — ключ принят; 401/403 — ключ неверен/отозван (ключ авторегистрации → AUTOREG_NEEDED=1); прочее — предупреждение.
+# Аргумент: источник ключа (по умолчанию KEY_SOURCE); после только что выполненной авторегистрации — fresh.
 relay_check_service_key() {
   local -; set +x
+  local src="${1:-$KEY_SOURCE}"
   print_header "Проверка ключа сервиса номеров"
   if [[ "$DRY_RUN" == "1" ]]; then
     if [[ -z "$SERVICE_KEY" ]]; then plan "проверка ключа - после авторегистрации"; else
-      plan "POST ${API_BASE}/api/verify-code {} с заголовком ${PM_SERVICE_KEY_HEADER} (ключ — через stdin curl, не в argv) → ожидается 422"; fi
+      plan "POST ${API_BASE}/api/verify-code {} с заголовком ${PM_SERVICE_KEY_HEADER} (ключ — через stdin curl, не в argv) → ожидается 422"
+      [[ "$src" != "selfhost" ]] || plan "ответ 401/403 (ключ авторегистрации отозван: сервер снят с регистрации или ключ сменён) → регистрация заново после выпуска TLS"; fi
     return 0
   fi
   if [[ -z "$SERVICE_KEY" ]]; then
@@ -346,15 +388,23 @@ relay_check_service_key() {
     print_warning "Проверка ключа пропущена (--skip-key-check)"
     return 0
   fi
-  local code
-  code="$(printf 'header = "%s: %s"\n' "$PM_SERVICE_KEY_HEADER" "$SERVICE_KEY" | \
-    curl -sS -m 15 -o /dev/null -w '%{http_code}' -K - -H 'Content-Type: application/json' \
-      -X POST --data '{}' "${API_BASE}/api/verify-code" 2>/dev/null || echo 000)"
-  case "$code" in
-    422|400) print_success "Ключ принят сервисом номеров (HTTP $code)" ;;
-    401|403) die "Сервис номеров отклонил ключ (HTTP $code): ключ неверен, отозван или не активирован. Повторите с верным ключом." ;;
-    429)     print_warning "Сервис номеров ответил 429 (лимит) — ключ не проверен, продолжаю" ;;
-    000)     print_warning "Сервис номеров недоступен ($API_BASE) — ключ не проверен, продолжаю" ;;
-    *)       print_warning "Неожиданный ответ сервиса номеров: HTTP $code — ключ не проверен" ;;
+  local out code err
+  out="$(printf 'header = "%s: %s"\n' "$PM_SERVICE_KEY_HEADER" "$SERVICE_KEY" | \
+    curl -sS -m 15 -w $'\n%{http_code}' -K - -H 'Content-Type: application/json' \
+      -X POST --data '{}' "${API_BASE}/api/verify-code" 2>/dev/null)" || out=$'\n000'
+  code="${out##*$'\n'}"
+  [[ "$code" =~ ^[0-9]{3}$ ]] || code=000
+  err="$(printf '%s' "${out%$'\n'*}" | relay_key_error)"
+  case "$(key_check_decision "$src" "$code" "$err" "${NO_AUTOREGISTER:-0}")" in
+    ok)          print_success "Ключ принят сервисом номеров (HTTP $code)" ;;
+    reregister)  print_warning "Ключ сервиса номеров отозван (сервер снят с регистрации или ключ сменён, HTTP $code) — регистрирую сервер заново (новый ключ — после выпуска TLS)"
+                 KEY_REVOKED=1; AUTOREG_NEEDED=1 ;;
+    noautoreg)   die "Сервис номеров отклонил ключ авторегистрации (HTTP $code): он отозван (сервер снят с регистрации или ключ сменён). Запустите установку без --no-autoregister - сервер зарегистрируется заново." ;;
+    rejected)    [[ "$src" != "fresh" ]] || die "Сервис номеров отклонил только что выданный ключ (HTTP $code). Напишите на admin@phantommessenger.org и укажите домен."
+                 die "Сервис номеров отклонил ключ (HTTP $code): ключ неверен, отозван или не активирован. Повторите с верным ключом." ;;
+    disabled)    print_error "Сервис номеров сейчас не принимает сторонние серверы (выключено владельцем сервиса, HTTP 503 selfhost_disabled): вход по кодам на этом сервере не работает, ключ сохранён. Вопросы: admin@phantommessenger.org" ;;
+    limited)     print_warning "Сервис номеров ответил 429 (лимит) — ключ не проверен, продолжаю" ;;
+    unreachable) print_warning "Сервис номеров недоступен ($API_BASE) — ключ не проверен, продолжаю" ;;
+    *)           print_warning "Неожиданный ответ сервиса номеров: HTTP $code${err:+ $err} — ключ не проверен" ;;
   esac
 }

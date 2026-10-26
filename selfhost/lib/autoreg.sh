@@ -60,6 +60,10 @@ autoreg_explain() {
   case "$http:$err" in
     503:selfhost_registration_disabled)
       print_error "Сервис номеров сейчас не принимает регистрацию новых серверов (выключена владельцем сервиса, HTTP 503). Повторите позже: sudo ./install.sh --reregister (или получите ключ вручную: admin@phantommessenger.org)" ;;
+    503:selfhost_registration_closed)
+      print_error "Сервис номеров сейчас закрыл регистрацию сторонних серверов - и новых, и повторных (HTTP 503 selfhost_registration_closed). Ключ не выдан. Повторите позже или напишите admin@phantommessenger.org" ;;
+    503:selfhost_disabled)
+      print_error "Сервис номеров не принимает сторонние серверы (выключено владельцем сервиса, HTTP 503 selfhost_disabled): регистрация невозможна, вход по кодам на сторонних серверах не работает. Вопросы: admin@phantommessenger.org" ;;
     503:*)
       print_error "Сервис номеров временно недоступен (HTTP 503, ${err:-без кода}). Повторите позже: sudo ./install.sh --reregister" ;;
     429:rate_limited)
@@ -79,7 +83,7 @@ autoreg_explain() {
         unreachable)       print_error "Сервис номеров не достучался до https://${DOMAIN}:443 (порт 443 закрыт у провайдера/в файрволе?)" ;;
         tls_error)         print_error "Сервис номеров не принял TLS-сертификат ${DOMAIN}: нужен сертификат публичного CA, действительный для этого имени" ;;
         body_mismatch)     print_error "Файл проверки отдан, но тело не совпало с ожидаемым (кэш CDN или чужой ответ)" ;;
-        *)                 print_error "Сервис номеров не получил файл проверки (${reason:-bad_response}). Возможные причины: ответ не 200, редирект, Cloudflare/CDN отдаёт кэшированную страницу, либо домен заблокирован владельцем сервиса" ;;
+        *)                 print_error "Сервис номеров не получил файл проверки (${reason:-bad_response}). Возможные причины: ответ не 200, редирект, Cloudflare/CDN отдаёт кэшированную страницу, либо сервер/домен заблокирован владельцем сервиса (тогда регистрация невозможна - напишите admin@phantommessenger.org)" ;;
       esac
       if [[ "$TLS_MODE" == cloudflare-* ]]; then
         print_info "Cloudflare: добавьте Cache Rule - обход кэша (Bypass) для ${PM_CHALLENGE_PREFIX}* и повторите: sudo ./install.sh --reregister"

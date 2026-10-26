@@ -32,7 +32,9 @@ usage() {
                             Без ключа установщик САМ регистрирует сервер в сервисе номеров (после выпуска TLS):
                             домен подтверждается файлом /.well-known/phantom-numbers/<токен>, ключ ложится в env.
   --no-autoregister         не регистрироваться автоматически (без ключа установка завершится с предупреждением)
-  --reregister              повторная регистрация: новый ключ, прежний перестаёт работать (ротация)
+  --reregister              повторная регистрация: новый ключ, прежний перестаёт работать (ручная ротация).
+                            Если ключ авторегистрации уже отозван (сервер снят с регистрации), флаг не нужен:
+                            повторный запуск установки сам зарегистрирует сервер заново (ручной ключ не подменяется)
 
 Режимы TLS:
   letsencrypt               Let's Encrypt HTTP-01 (нужны :80 и A-запись домена на этот сервер)
@@ -72,6 +74,12 @@ usage() {
   --dry-run                 напечатать план действий, ничего не меняя в системе
   --render-dir <каталог>    с --dry-run: сохранить отрендеренные конфиги (nginx, coturn, env без секретов…)
   -h, --help                эта справка
+
+Коды выхода:
+  0   установка завершена
+  1   ошибка: установка прервана (причина выше)
+  3   только --non-interactive: установка завершена, но регистрация в сервисе номеров не удалась
+      (вход по кодам не работает; причина выше). В диалоге в этом случае - предупреждение и код 0
 USAGE
 }
 
@@ -80,7 +88,7 @@ CF_TOKEN_FILE="" ; CERT_SRC="" ; KEY_SRC=""
 { SERVICE_KEY="${PM_SERVICE_KEY:-}"; } 2>/dev/null   # (stderr глушится: bash -x не должен печатать ключ)
 SERVICE_KEY_FILE=""
 OPERATOR_NAME="" ; OPERATOR_EMAIL="" ; OPERATOR_SITE="" ; OPERATOR_TERMS_URL="" ; OPERATOR_PRIVACY_URL=""
-NO_AUTOREGISTER=0 ; REREGISTER=0 ; KEY_SOURCE="" ; AUTOREG_NEEDED=0 ; AUTOREG_FAILED=0
+NO_AUTOREGISTER=0 ; REREGISTER=0 ; KEY_SOURCE="" ; AUTOREG_NEEDED=0 ; AUTOREG_FAILED=0 ; KEY_REVOKED=0
 ENABLE_UFW=0 ; SKIP_KEY_CHECK=0 ; LE_STAGING=0 ; NON_INTERACTIVE=0 ; RENDER_DIR=""
 SSL_CERT="" ; SSL_KEY="" ; ENV_WORK="" ; PREV_ENV=""
 CF_ONLY_443="" ; CF_ONLY_EXPLICIT=0 ; ALLOW_UNSIGNED=0 ; UNSIGNED_USED=0 ; SIGNER_FP="" ; FORCE=0 ; NO_PYTHON_PPA=0 ; PM_PYTHON=""
@@ -451,7 +459,7 @@ next_steps() {
 Push-уведомлений на этом сервере нет (ключи FCM/APNs принадлежат владельцу приложения).
 DONE
   if [[ "$AUTOREG_FAILED" == "1" ]]; then
-    printf '\n%s\n' "ВНИМАНИЕ: регистрация в сервисе номеров не выполнена (причина выше). Повторить: sudo ${PM_OPT}/selfhost/install.sh --reregister (те же параметры), либо запросить ключ вручную: admin@phantommessenger.org."
+    printf '\n%s\n' "ВНИМАНИЕ: регистрация в сервисе номеров не выполнена (причина выше). Повторить: sudo ${PM_OPT}/selfhost/install.sh (те же параметры; отозванный ключ перерегистрируется сам), либо запросить ключ вручную: admin@phantommessenger.org."
   fi
   cloudflare_checklist
   if (( ${#KEY_SOURCES[@]} > 0 )); then
@@ -485,6 +493,7 @@ main() {
   relay_install_venv
   # --reregister: прежний ключ заменит авторегистрация после выпуска TLS — заранее его не проверяем
   # (отозванный или неверный старый ключ не должен прерывать перерегистрацию).
+  # Без флага отозванный ключ авторегистрации (401/403) включает регистрацию заново (AUTOREG_NEEDED=1), ручной — die.
   if [[ "$REREGISTER" == "1" ]]; then
     print_info "Прежний ключ сервиса номеров не проверяется: --reregister выдаст новый после выпуска TLS"
   else
@@ -508,11 +517,12 @@ main() {
     if relay_autoregister; then
       if [[ "$DRY_RUN" != "1" ]]; then
         autoreg_persist_key
-        SKIP_KEY_CHECK=0; relay_check_service_key
+        SKIP_KEY_CHECK=0; relay_check_service_key fresh
       fi
     else
       AUTOREG_FAILED=1
-      if [[ -n "$SERVICE_KEY" ]]; then print_warning "Авторегистрация не удалась - установка продолжается с прежним ключом"
+      if [[ "$KEY_REVOKED" == "1" ]]; then print_warning "Повторная регистрация не удалась - в env остаётся отозванный ключ, вход по кодам не работает"
+      elif [[ -n "$SERVICE_KEY" ]]; then print_warning "Авторегистрация не удалась - установка продолжается с прежним ключом"
       else print_warning "Авторегистрация не удалась - установка продолжается без ключа сервиса номеров (вход по кодам не заработает)"; fi
     fi
   elif [[ -z "$SERVICE_KEY" ]]; then
@@ -528,6 +538,11 @@ main() {
   rm -f "$PREV_ENV"; PREV_ENV=""
   next_steps
   [[ "$DRY_RUN" == "1" ]] && print_warning "DRY-RUN завершён: ничего не изменено"
+  # Автоматическая установка не должна рапортовать успех, если ключа сервиса номеров нет (ревью SEC4).
+  if [[ "$AUTOREG_FAILED" == "1" && "$NON_INTERACTIVE" == "1" ]]; then
+    print_error "Код выхода 3: установка завершена, но регистрация в сервисе номеров не удалась (вход по кодам не работает)"
+    exit 3
+  fi
   return 0
 }
 
