@@ -12,32 +12,36 @@ relay (FastAPI), веб-клиент (React/Vite), TURN-сервер для зв
 
 1. **VPS** с Ubuntu 22.04, 24.04 или 26.04 LTS: 1 vCPU, от 1 ГБ RAM, 10 ГБ диска. Сервер должен быть выделенным (установщик
    сам настраивает nginx и coturn). Доступ по SSH под root или с `sudo`.
-2. **Домен** (лучше поддомен), например `msg.example.com`, и **две DNS-записи**: `msg.example.com` и `turn.msg.example.com`
-   (для звонков) — обе типа **A** на IP сервера, вторая всегда **DNS only**. Подробно — [DNS-записи](#dns-записи) ниже.
+2. **Домен** (лучше поддомен), например `msg.example.com`, с A-записью на IP сервера. Если домен за Cloudflare — ещё
+   `turn.msg.example.com` для звонков (только **DNS only**). Подробно — [DNS-записи](#dns-записи) ниже.
 3. **Открытые порты** у провайдера VPS: `80/tcp`, `443/tcp`, `3478/tcp+udp`, `5349/tcp`, `49152–65535/udp`.
 4. **Почта** — для Let's Encrypt и контакта оператора на страницах `/terms` и `/privacy`.
 
 ### DNS-записи
 
-Создайте **до установки** две записи типа **A** на IP сервера (у регистратора домена или в Cloudflare):
+Создайте записи типа **A** на IP сервера **до установки** (у регистратора домена или в Cloudflare). Сколько их нужно, зависит
+от того, стоит ли домен за Cloudflare:
 
-| Имя | Тип | Значение | Для чего | Cloudflare |
-|---|---|---|---|---|
-| `msg.example.com` | A | IP сервера | сайт, веб-клиент, подключение приложений | режим TLS `1` — **DNS only** (серое облако); режимы `2`–`3` — можно проксировать (оранжевое) |
-| `turn.msg.example.com` | A | IP сервера | звонки: на этом имени работают STUN и TURN (coturn) | всегда **DNS only** (серое облако) |
+| Домен | Записи | Cloudflare |
+|---|---|---|
+| указывает прямо на сервер (режим TLS `1`, обычно и `4`) | **одна**: `msg.example.com` → IP сервера; звонки идут через то же имя | **DNS only** (серое облако) |
+| за Cloudflare (режимы `2`–`3`) | **две**: `msg.example.com` и `turn.msg.example.com` → IP сервера | `msg…` можно проксировать (оранжевое), `turn.msg…` — только **DNS only** (серое) |
 
 У большинства регистраторов в поле «Имя» пишут только левую часть: для домена `example.com` — `msg` и `turn.msg`.
 
-**Зачем вторая запись.** Приложения и браузер соединяют звонки через STUN/TURN вашего сервера по имени `turn.<ваш домен>`.
-Cloudflare не пропускает UDP, поэтому звонки не могут идти через оранжевое облако — отсюда отдельное имя в сером.
-Без этой записи сайт, вход и сообщения работают, а **звонки не соединяются** (P2P-передача файлов между разными сетями — тоже).
+**Зачем `turn.…` при Cloudflare.** Звонки соединяются через STUN/TURN вашего сервера, а Cloudflare не пропускает UDP. Поэтому
+за оранжевым облаком звонкам нужно отдельное имя, которое указывает прямо на сервер. Без него сайт, вход и сообщения работают,
+а **звонки не соединяются** (P2P-передача файлов между разными сетями — тоже). Если домен указывает прямо на сервер, установщик
+сам использует для звонков имя сайта; если `turn.…` уже создана, он возьмёт её (с ней включается и TLS-вариант `turns:`).
+Своё имя для звонков — флаг `--turn-host`.
 
-**Установщик это имя не спрашивает**: он сам берёт `turn.<домен>`, показывает его в плане («TURN-хост») и после подтверждения
-проверяет DNS. Если записи нет, он только предупреждает и продолжает установку. Звонки заработают, как только запись
-появится (перезапускать ничего не нужно); TLS-вариант `turns:` включит повторный запуск той же командой. Другое имя — флаг `--turn-host`.
+**Установщик проверяет записи до «Продолжить?».** Если записи для звонков нет, он остановится и подскажет, какую создать:
+Enter — проверить снова (новая запись появляется не сразу), `n` — продолжить без звонков. Без диалога (`--non-interactive`) —
+предупреждение и напоминание в конце. Звонки заработают, как только запись появится, перезапускать ничего не нужно;
+TLS-вариант `turns:` включит повторный запуск той же командой.
 
 Проверка: `nslookup turn.msg.example.com` (или `dig +short turn.msg.example.com`) должна показать IP сервера; после установки
-обе записи проверяет `sudo /opt/phantom-messenger/selfhost/selftest.sh`.
+записи проверяет `sudo /opt/phantom-messenger/selfhost/selftest.sh`.
 
 ### Установка — одна команда
 
@@ -64,7 +68,7 @@ sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/newzealandgrom/phan
 | Сайт оператора | ваш сайт или сервер | `https://msg.example.com` |
 | Продолжить? [y/N] | посмотрите план и введите `y` | `y` |
 
-Имя для звонков (`turn.<домен>`) установщик не спрашивает — запись нужно создать заранее, см. [DNS-записи](#dns-записи).
+Если записи для звонков не хватает, установщик остановится перед «Продолжить?» и подскажет, какую создать — см. [DNS-записи](#dns-записи).
 
 В режимах `2`–`4` дополнительно спросят файл токена Cloudflare (Zone:DNS:Edit) либо файлы сертификата и ключа.
 Ключ сервиса номеров **вводить не нужно**: установщик сам регистрирует ваш сервер в сервисе номеров (Phantom Numbers) — для этого
@@ -142,32 +146,36 @@ Phantom Messenger is an ephemeral end-to-end encrypted messenger. This repositor
 
 1. **A VPS** running Ubuntu 22.04, 24.04 or 26.04 LTS: 1 vCPU, 1 GB+ RAM, 10 GB disk. It must be dedicated (the installer configures nginx and
    coturn itself). SSH access as root or with `sudo`.
-2. **A domain** (preferably a subdomain), e.g. `msg.example.com`, and **two DNS records**: `msg.example.com` and `turn.msg.example.com`
-   (for calls), both **A** records to the server IP, the second always **DNS only**. Details: [DNS records](#dns-records) below.
+2. **A domain** (preferably a subdomain), e.g. `msg.example.com`, with an A record to the server IP. Behind Cloudflare, also
+   `turn.msg.example.com` for calls (**DNS only**). Details: [DNS records](#dns-records) below.
 3. **Open ports** at your VPS provider: `80/tcp`, `443/tcp`, `3478/tcp+udp`, `5349/tcp`, `49152–65535/udp`.
 4. **An e-mail** for Let's Encrypt and the operator contact shown on `/terms` and `/privacy`.
 
 ### DNS records
 
-**Before installing**, create two **A** records pointing at the server IP (at your registrar or in Cloudflare):
+Create **A** records pointing at the server IP **before installing** (at your registrar or in Cloudflare). How many you need
+depends on whether the domain sits behind Cloudflare:
 
-| Name | Type | Value | Purpose | Cloudflare |
-|---|---|---|---|---|
-| `msg.example.com` | A | server IP | site, web client, app connections | TLS mode `1`: **DNS only** (grey cloud); modes `2`–`3`: may be proxied (orange) |
-| `turn.msg.example.com` | A | server IP | calls: STUN and TURN (coturn) answer on this name | always **DNS only** (grey cloud) |
+| Domain | Records | Cloudflare |
+|---|---|---|
+| points straight at the server (TLS mode `1`, usually `4` too) | **one**: `msg.example.com` -> server IP; calls use the same name | **DNS only** (grey cloud) |
+| behind Cloudflare (modes `2`–`3`) | **two**: `msg.example.com` and `turn.msg.example.com` -> server IP | `msg…` may be proxied (orange), `turn.msg…` must be **DNS only** (grey) |
 
 Most registrars want only the left part in the "Name" field: for `example.com` that is `msg` and `turn.msg`.
 
-**Why the second record.** The apps and browsers connect calls through your server's STUN/TURN at `turn.<your domain>`.
-Cloudflare does not pass UDP, so calls cannot go through the orange cloud - hence a separate grey-cloud name. Without this
-record the site, sign-in and messages work, but **calls do not connect** (nor do P2P file transfers between different networks).
+**Why `turn.…` behind Cloudflare.** Calls connect through your server's STUN/TURN, and Cloudflare does not pass UDP. So behind
+the orange cloud calls need a separate name that points straight at the server. Without it the site, sign-in and messages work,
+but **calls do not connect** (nor do P2P file transfers between different networks). If the domain points straight at the
+server, the installer uses the site name for calls by itself; if `turn.…` already exists, it takes that (and enables the TLS
+variant `turns:`). Use `--turn-host` for your own name.
 
-**The installer does not ask for this name**: it uses `turn.<domain>`, shows it in the plan ("TURN host") and checks DNS after
-you confirm. If the record is missing it only warns and carries on. Calls start working as soon as the record appears (nothing
-to restart); run the same command again to also enable the TLS variant `turns:`. Use `--turn-host` for a different name.
+**The installer checks the records before "Continue?".** If the calls record is missing it stops and tells you which record to
+create: Enter re-checks (a new record may take a while to appear), `n` continues without calls. Without the dialog
+(`--non-interactive`) it warns and reminds you at the end. Calls start working as soon as the record appears, nothing to
+restart; run the same command again to also enable the TLS variant `turns:`.
 
 Check: `nslookup turn.msg.example.com` (or `dig +short turn.msg.example.com`) must print the server IP; after installation
-`sudo /opt/phantom-messenger/selfhost/selftest.sh` checks both records.
+`sudo /opt/phantom-messenger/selfhost/selftest.sh` checks the records.
 
 ### Install — one command
 
@@ -194,7 +202,7 @@ The installer asks its questions in the terminal (Enter accepts the default show
 | Operator site | your site or the server | `https://msg.example.com` |
 | Continue? [y/N] | review the plan and type `y` | `y` |
 
-The installer does not ask for the calls name (`turn.<domain>`) - create that record beforehand, see [DNS records](#dns-records).
+If the calls record is missing, the installer stops before "Continue?" and tells you which one to create - see [DNS records](#dns-records).
 
 Modes `2`–`4` additionally ask for the Cloudflare token file (Zone:DNS:Edit) or the certificate and key files. You do **not** enter a numbers
 service key: the installer registers your server with the Phantom Numbers service by itself (port 443 must be reachable from the internet).

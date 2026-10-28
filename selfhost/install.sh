@@ -46,7 +46,8 @@ usage() {
 
 Дополнительно:
   --email <адрес>           почта для Let's Encrypt (по умолчанию = --operator-email)
-  --turn-host <имя>         имя TURN-сервера, по умолчанию turn.<domain>; ТОЛЬКО DNS-only (серое облако)
+  --turn-host <имя>         имя для звонков (STUN/TURN), ТОЛЬКО DNS-only (серое облако). По умолчанию turn.<domain>;
+                            без Cloudflare, если turn.<domain> не указывает на сервер, а домен указывает, — имя сайта
   --external-ip <IPv4>      внешний IP сервера (если автоопределение не подходит; за NAT)
   --api-base <https://…>    адрес сервиса номеров (по умолчанию PM_DEFAULT_API_BASE из lib/common.sh)
   --operator-name <текст>   имя оператора для /terms и /privacy (по умолчанию = домен)
@@ -160,9 +161,11 @@ ask() { # ask <переменная> <вопрос> [значение по ум�
 
 # Что оператор задал флагами (их в диалоге не переспрашиваем).
 FLAG_OPERATOR_NAME="$OPERATOR_NAME" ; FLAG_OPERATOR_EMAIL="$OPERATOR_EMAIL" ; FLAG_OPERATOR_SITE="$OPERATOR_SITE"
+FLAG_TURN_HOST="$TURN_HOST" ; CONF_DOMAIN=""
 
 # Значения по умолчанию из прошлой установки (повторный запуск).
 if [[ -f "$PM_CONF_FILE" ]]; then
+  CONF_DOMAIN="$(conf_get DOMAIN)"
   [[ -n "$DOMAIN" ]]         || DOMAIN="$(conf_get DOMAIN)"
   [[ -n "$TLS_MODE" ]]       || TLS_MODE="$(conf_get TLS_MODE)"
   [[ -n "$TURN_HOST" ]]      || TURN_HOST="$(conf_get TURN_HOST)"
@@ -216,6 +219,18 @@ fi
 [[ -n "$OPERATOR_SITE" ]] || OPERATOR_SITE="https://${DOMAIN}"
 OPERATOR_SITE="${OPERATOR_SITE%/}"
 [[ -n "$TURN_HOST" ]] || TURN_HOST="turn.${DOMAIN}"
+# Имя для звонков не задано флагом и раньше было выбрано автоматически (turn.<домен> или <домен>, в том числе для прежнего
+# домена при его смене): окончательно его выбирает tls_choose_turn_host после определения внешнего IP.
+# За Cloudflare звонкам нужно отдельное имя turn.<домен> (DNS only).
+TURN_HOST_AUTO=0 ; TURN_DNS_OK=1
+if [[ -z "$FLAG_TURN_HOST" ]]; then
+  if [[ "$TURN_HOST" == "turn.${DOMAIN}" || "$TURN_HOST" == "$DOMAIN" ]]; then
+    TURN_HOST_AUTO=1
+  elif [[ -n "$CONF_DOMAIN" && ( "$TURN_HOST" == "turn.${CONF_DOMAIN}" || "$TURN_HOST" == "$CONF_DOMAIN" ) ]]; then
+    TURN_HOST_AUTO=1 ; TURN_HOST="turn.${DOMAIN}"
+  fi
+  if [[ "$TURN_HOST_AUTO" == "1" && "$TLS_MODE" == cloudflare-* ]]; then TURN_HOST="turn.${DOMAIN}"; fi
+fi
 # ufw 443 только для Cloudflare: для Origin Certificate прямой заход браузеров всё равно не принимается.
 if [[ -z "$CF_ONLY_443" ]]; then
   case "$TLS_MODE" in cloudflare-origin) CF_ONLY_443=1 ;; *) CF_ONLY_443=0 ;; esac
@@ -391,12 +406,16 @@ key_plan_text() {
   fi
 }
 
+turn_host_note() {
+  if [[ "$TURN_HOST" == "$DOMAIN" ]]; then echo "имя сайта: отдельная запись не нужна"; else echo "отдельная A-запись, только DNS-only"; fi
+}
+
 summary() {
   print_header "План"
   cat <<PLAN
   Домен:            $DOMAIN
   TLS:              $TLS_MODE
-  TURN-хост:        $TURN_HOST (только DNS-only)
+  TURN-хост:        $TURN_HOST ($(turn_host_note))
   Сервис номеров:   $API_BASE
   Ключ номеров:     $(key_plan_text)
   Оператор:         $OPERATOR_NAME <$OPERATOR_EMAIL>, $OPERATOR_SITE
@@ -408,7 +427,7 @@ summary() {
 PLAN
   if [[ "$DRY_RUN" != "1" && "$NON_INTERACTIVE" != "1" && -t 0 ]]; then
     local a=""; read -r -p "Продолжить? [y/N]: " a || true
-    [[ "$a" =~ ^[YyДд] ]] || die "Отменено"
+    answer_yes "$a" || die "Отменено"
   fi
 }
 
@@ -461,6 +480,9 @@ DONE
   if [[ "$AUTOREG_FAILED" == "1" ]]; then
     printf '\n%s\n' "ВНИМАНИЕ: регистрация в сервисе номеров не выполнена (причина выше). Повторить: sudo ${PM_OPT}/selfhost/install.sh (те же параметры; отозванный ключ перерегистрируется сам), либо запросить ключ вручную: admin@phantommessenger.org."
   fi
+  if [[ "$TURN_DNS_OK" == "0" ]] && ! turn_dns_ok; then
+    printf '\n%s\n' "ВНИМАНИЕ: звонки не соединятся, пока нет A-записи ${TURN_HOST} → ${EXTERNAL_IP:-IP сервера} (в Cloudflare — DNS only, серое облако). Перезапускать ничего не нужно: звонки заработают, когда запись появится; TLS-вариант turns: включит повторный запуск установки."
+  fi
   cloudflare_checklist
   if (( ${#KEY_SOURCES[@]} > 0 )); then
     printf '\nУдалите исходные файлы с секретами (копии установлены в %s, права 0600/0640):\n  shred -u' "$PM_ETC"
@@ -471,8 +493,8 @@ DONE
 main() {
   preflight
   verify_package
-  summary
   tls_check_dns
+  summary
   if [[ "$DRY_RUN" != "1" && -f "$PM_ENV_FILE" ]]; then
     PREV_ENV="$(mktemp)"; cp -a "$PM_ENV_FILE" "$PREV_ENV"; chmod 0600 "$PREV_ENV"
   fi

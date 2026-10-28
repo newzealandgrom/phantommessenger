@@ -438,11 +438,18 @@ detect_external_ip() {
   if valid_ipv4 "$ip"; then echo "$ip"; fi
 }
 
+# Ответы в диалогах — точные слова, без регэкспов: в локали C (частой на чистых VPS) [Дд] совпадает с первым байтом
+# любой кириллицы, и «нет» засчитывалось как «да» (до 0.1.2).
+answer_yes() { case "${1//[[:space:]]/}" in y|Y|yes|Yes|YES|д|Д|да|Да|ДА) return 0 ;; *) return 1 ;; esac; }
+answer_no()  { case "${1//[[:space:]]/}" in n|N|no|No|NO|н|Н|нет|Нет|НЕТ) return 0 ;; *) return 1 ;; esac; }
+
+# Нет записи — пустой вывод и код 0: getent отвечает 2, и под set -e + pipefail присваивание a="$(resolve_a …)"
+# молча обрывало установку на шаге DNS (до 0.1.2).
 resolve_a() {
   if have getent; then
-    getent ahostsv4 "$1" 2>/dev/null | awk '{print $1; exit}'
+    getent ahostsv4 "$1" 2>/dev/null | awk '{print $1; exit}' || true
   elif have dig; then
-    dig +short A "$1" | head -1
+    dig +short A "$1" 2>/dev/null | head -1 || true
   fi
 }
 

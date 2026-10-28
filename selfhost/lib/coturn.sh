@@ -14,6 +14,11 @@ turn_local_ip() {
 # Сертификат для turns:5349 — публично доверенный, на имя TURN_HOST.
 turn_setup_cert() {
   TURN_CERT_MODE=""
+  # Звонки через имя сайта: закрытый ключ сайта coturn не получает - turns: выключен, работает turn: на 3478 (UDP и TCP).
+  if [[ "$TURN_HOST" == "$DOMAIN" ]]; then
+    print_info "Звонки идут через имя сайта $DOMAIN: TLS-вариант turns: не включается (ключ сайта не передаётся coturn), работает turn: на 3478 (UDP и TCP)"
+    return 0
+  fi
   # custom: если пользовательский PEM покрывает turn-хост — используем его.
   if [[ "$TLS_MODE" == "custom" ]]; then
     cert_matches_host "$CERT_SRC" "$TURN_HOST" && rc=0 || rc=$?
@@ -58,6 +63,16 @@ turn_setup_cert() {
   RENEWED_LINEAGE="${LE_LIVE}/${TURN_HOST}" /etc/letsencrypt/renewal-hooks/deploy/10-phantom-coturn.sh || true
 }
 
+# turns: выключен: убрать хук certbot и прежние копии сертификата (например, после перехода звонков на имя сайта).
+turn_drop_cert() {
+  local hook=/etc/letsencrypt/renewal-hooks/deploy/10-phantom-coturn.sh
+  if [[ "$DRY_RUN" == "1" ]]; then
+    if [[ -e "$hook" || -e "${TURN_CERT_DIR}/privkey.pem" ]]; then plan "turns: выключен — удалить $hook и копии сертификата в $TURN_CERT_DIR"; fi
+    return 0
+  fi
+  rm -f "$hook" "${TURN_CERT_DIR}/fullchain.pem" "${TURN_CERT_DIR}/privkey.pem"
+}
+
 coturn_setup() {
   print_header "TURN (coturn)"
   apt_install coturn
@@ -84,7 +99,7 @@ no-tlsv1_1
 cipher-list=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305"
     relay_set_turn_urls 1
   else
-    tls_block="# turns: выключен — нет публично доверенного сертификата на ${TURN_HOST}"
+    tls_block="# turns: выключен — нет отдельного публично доверенного сертификата на ${TURN_HOST}"
     relay_set_turn_urls 0
   fi
 
@@ -97,12 +112,15 @@ cipher-list=ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDS
     plan "turnserver.conf (user-quota=60, total-quota=1200, max-bps=1000000, без bps-capacity, без denied-peer-ip на свой IP) → /etc/turnserver.conf"
     [[ -n "${RENDER_DIR:-}" ]] && sed -E 's/^(static-auth-secret)=.*/\1=***/' "$conf" > "${RENDER_DIR}/turnserver.conf"
     copy_install "$SCRIPT_DIR/templates/coturn-10-hardening.conf" /etc/systemd/system/coturn.service.d/10-hardening.conf 0644 root:root
+    [[ -n "$TURN_CERT_MODE" ]] || turn_drop_cert
     plan "enable+restart coturn"
     rm -f "$conf"
     return 0
   fi
   install_file "$conf" /etc/turnserver.conf 0640 root:turnserver
   rm -f "$conf"
+  # turns: выключен - копии сертификата и хук убираются после записи конфига, который на них уже не ссылается.
+  [[ -n "$TURN_CERT_MODE" ]] || turn_drop_cert
   copy_install "$SCRIPT_DIR/templates/coturn-10-hardening.conf" /etc/systemd/system/coturn.service.d/10-hardening.conf 0644 root:root
   [[ -f /etc/default/coturn ]] && sed -i.bak 's/^#TURNSERVER_ENABLED=1/TURNSERVER_ENABLED=1/' /etc/default/coturn && rm -f /etc/default/coturn.bak
   systemctl daemon-reload

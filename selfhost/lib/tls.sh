@@ -62,9 +62,8 @@ tls_validate_inputs() {
 # DNS: A-запись домена и turn-хоста.
 tls_check_dns() {
   print_header "DNS"
-  local a t
+  local a
   a="$(resolve_a "$DOMAIN")"
-  t="$(resolve_a "$TURN_HOST")"
   case "$TLS_MODE" in
     letsencrypt|custom)
       if [[ -z "$a" && "$TLS_MODE" == "letsencrypt" && "$DRY_RUN" != "1" ]]; then
@@ -82,13 +81,53 @@ tls_check_dns() {
       ;;
     *) print_info "$DOMAIN → ${a:-нет A-записи} (режим $TLS_MODE: домен может быть проксирован Cloudflare)" ;;
   esac
-  if [[ -z "$t" ]]; then
-    print_warning "$TURN_HOST не резолвится — создайте A-запись $TURN_HOST → ${EXTERNAL_IP:-IP сервера} в режиме DNS only (серое облако); без неё звонки через TURN не заработают"
-  elif [[ -n "$EXTERNAL_IP" && "$t" != "$EXTERNAL_IP" ]]; then
-    print_warning "$TURN_HOST → $t, а внешний IP сервера $EXTERNAL_IP (Cloudflare прокси для TURN запрещён: только DNS only)"
-  else
-    print_success "$TURN_HOST → $t"
-  fi
+  tls_check_turn_dns
+}
+
+# Имя для звонков (STUN/TURN) при TURN_HOST_AUTO=1 (не задано флагом --turn-host). За Cloudflare - всегда turn.<домен>
+# (выставляется в install.sh до проверок). Без Cloudflare: turn.<домен>, если указывает на сервер (отдельный сертификат,
+# turns:), иначе имя сайта, если указывает оно (хватает одной A-записи, turns: выключен); иначе имя не меняется.
+tls_choose_turn_host() {
+  [[ "${TURN_HOST_AUTO:-0}" == "1" && -n "$EXTERNAL_IP" ]] || return 0
+  [[ "$TLS_MODE" != cloudflare-* ]] || return 0
+  local h
+  for h in "turn.${DOMAIN}" "$DOMAIN"; do
+    if [[ "$(resolve_a "$h")" == "$EXTERNAL_IP" ]]; then
+      if [[ "$h" == "$DOMAIN" && "$TURN_HOST" != "$DOMAIN" ]]; then
+        print_info "Звонки (STUN/TURN) пойдут через $DOMAIN: он указывает прямо на сервер, отдельная запись turn.${DOMAIN} не нужна"
+      fi
+      TURN_HOST="$h"
+      return 0
+    fi
+  done
+}
+
+# Запись имени для звонков указывает на сервер (без внешнего IP - хотя бы резолвится).
+turn_dns_ok() {
+  local t
+  t="$(resolve_a "$TURN_HOST")"
+  [[ -n "$t" && ( -z "$EXTERNAL_IP" || "$t" == "$EXTERNAL_IP" ) ]]
+}
+
+# Без записи имени для звонков звонки не соединяются. В диалоге установщик ждёт, пока оператор её создаст
+# (Enter - проверить снова, n - продолжить без звонков); без диалога - предупреждение и напоминание в итоге (TURN_DNS_OK=0).
+tls_check_turn_dns() {
+  local t ans
+  while :; do
+    tls_choose_turn_host
+    t="$(resolve_a "$TURN_HOST")"
+    if turn_dns_ok; then TURN_DNS_OK=1; print_success "$TURN_HOST → $t (звонки)"; return 0; fi
+    TURN_DNS_OK=0
+    if [[ -z "$t" ]]; then
+      print_warning "$TURN_HOST не резолвится: создайте A-запись $TURN_HOST → ${EXTERNAL_IP:-IP сервера} (в Cloudflare — DNS only, серое облако). Без неё звонки не соединяются"
+    else
+      print_warning "$TURN_HOST → $t, а внешний IP сервера $EXTERNAL_IP: звонки не соединятся. Запись должна указывать прямо на сервер (в Cloudflare — DNS only, серое облако)"
+    fi
+    [[ "$DRY_RUN" != "1" && "$NON_INTERACTIVE" != "1" && -t 0 ]] || return 0
+    read -r -p "Создайте запись и нажмите Enter — проверю снова (новая запись появляется не сразу); n — продолжить без звонков: " ans || return 0
+    ! answer_no "$ans" || return 0
+    if have resolvectl; then resolvectl flush-caches >/dev/null 2>&1 || true; fi
+  done
 }
 
 certbot_email_args() {

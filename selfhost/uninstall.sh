@@ -29,7 +29,7 @@ if [[ "$ASSUME_YES" != "1" ]]; then
   [[ -t 0 ]] || die "Нет терминала: используйте --yes"
   ans=""
   read -r -p "Продолжить? [y/N]: " ans || true
-  [[ "$ans" =~ ^[YyДд] ]] || die "Отменено"
+  answer_yes "$ans" || die "Отменено"
 fi
 # Скрипт сам лежит в /opt/phantom-messenger/selfhost — запускаем копию из временного каталога
 # (он удаляется после завершения), иначе удаление $PM_OPT вырвет файл из-под работающего скрипта.
@@ -80,7 +80,7 @@ print_success "Конфиги и код удалены ($PM_OPT)"
 
 if [[ "$PURGE" == "1" ]]; then
   print_header "Purge"
-  for host in "$DOMAIN" "$TURN_HOST"; do
+  for host in "$DOMAIN" "$TURN_HOST" "turn.${DOMAIN}"; do
     [[ -n "$host" && -d "/etc/letsencrypt/live/$host" ]] && certbot delete --non-interactive --cert-name "$host" >/dev/null 2>&1 || true
   done
   rm -rf "$PM_ETC" "$PM_STATE_DIR" "${PM_ROOT_PREFIX}/etc/coturn/certs"

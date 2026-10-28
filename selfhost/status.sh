@@ -59,7 +59,8 @@ cert_info() { # cert_info <путь> <метка>
 }
 site_cert="$(awk '$1 == "ssl_certificate" {gsub(";", "", $2); print $2; exit}' "$PM_NGINX_CONF" 2>/dev/null)"
 [[ -n "$site_cert" ]] && cert_info "$site_cert" "сертификат сайта"
-cert_info /etc/coturn/certs/fullchain.pem "сертификат turns:" 
+if [[ -f /etc/coturn/certs/fullchain.pem ]]; then cert_info /etc/coturn/certs/fullchain.pem "сертификат turns:"
+else print_info "turns: выключен (нет отдельного сертификата для $TURN_HOST) — звонки через turn: на 3478"; fi
 
 if ss -Hlun 'sport = :3478' 2>/dev/null | grep -q .; then ok "coturn слушает 3478/udp"; else bad "coturn: 3478/udp не слушает"; fi
 if ss -Hltn 'sport = :5349' 2>/dev/null | grep -q .; then ok "coturn слушает 5349/tcp (turns)"; else print_warning "coturn: 5349/tcp не слушает (turns отключён)"; fi

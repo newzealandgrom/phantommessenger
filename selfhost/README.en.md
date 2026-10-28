@@ -30,7 +30,7 @@ Russian version: [README.md](README.md)
 | OS | Ubuntu 22.04, 24.04 or 26.04 LTS. The relay needs Python ≥ 3.11: 24.04 (3.12) and 26.04 (3.14) use the system one; Ubuntu 22.04 is experimental: system Python 3.10 is too old, so the installer adds Python 3.12 from the deadsnakes PPA (key verified by its full fingerprint, dedicated `Signed-By` keyring, apt pinning: only `python3.12*` is taken from the PPA; `uninstall.sh` removes the PPA; opt out with `--no-python-ppa` and install Python ≥ 3.11 yourself). Verified on a live system: 26.04 only; 22.04 and 24.04 not yet. Debian 12 is untested. |
 | Resources | 1 vCPU, >= 1 GB RAM (2 GB better), 10 GB disk. amd64 primary, arm64 best effort. |
 | Host | a dedicated VPS: the installer takes ports 80/443 (nginx) and 3478/5349 (coturn) |
-| Domain | a subdomain such as `msg.example.com` (a subdomain is recommended: the server's HSTS covers nested names) and a second A record `turn.msg.example.com` for calls (STUN/TURN, DNS only): without it calls do not connect, see "TLS modes and DNS" |
+| Domain | a subdomain such as `msg.example.com` (a subdomain is recommended: the server's HSTS covers nested names) behind Cloudflare also an A record `turn.msg.example.com` for calls (STUN/TURN, DNS only); without Cloudflare calls use the site name, see "TLS modes and DNS" |
 | Ports | 80/tcp, 443/tcp, 3478/tcp+udp, 5349/tcp, 49152-65535/udp - also open them at your VPS provider |
 | Key | none needed: the installer registers the server with the numbers service itself (see "Numbers service key"); port 443 must be reachable from the internet |
 
@@ -99,7 +99,7 @@ token): the installer copies them into `/etc/phantom-messenger` (0600/0640), the
 Main flags (`./install.sh --help` lists all): `--domain`, `--tls letsencrypt|cloudflare-dns|cloudflare-origin|custom`,
 `--email`, `--service-key-file` (a manual key: disables automatic registration; or `PM_SERVICE_KEY`; `--service-key` is visible in `ps`), `--no-autoregister` (do not register; without a key the install ends with a warning and sign-in codes will not work), `--reregister` (manual key rotation: a new key, the old one stops working; not needed after the server was unregistered - see below), `--cf-api-token-file`
 (Zone:DNS:Edit token, for `cloudflare-dns`), `--origin-cert`/`--origin-key` (for `cloudflare-origin` and `custom`),
-`--turn-host` (default `turn.<domain>`, **DNS-only**), `--external-ip`, `--api-base`, `--operator-name`,
+`--turn-host` (calls name, **DNS-only**; default `turn.<domain>`, or the site name without Cloudflare when `turn.<domain>` does not point at the server but the domain does), `--external-ip`, `--api-base`, `--operator-name`,
 `--operator-email`, `--operator-site` (asked in the dialog; written to `operator.json`: shown on `/terms` and `/privacy` and in the iOS/macOS/Android apps connected to your server), `--operator-terms-url`/`--operator-privacy-url` (default `https://<domain>/terms`, `/privacy`), `--enable-ufw`, `--skip-key-check`,
 `--cf-only-443`/`--no-cf-only-443` (ufw: 443/tcp only for Cloudflare CIDRs, refreshed daily by `pm-cf-update.timer`; TURN ports are not restricted; default **on** for `cloudflare-origin`, **off** for `cloudflare-dns`; effective only while ufw is enabled), `--allow-unsigned` (unsafe, see above), `--le-staging`, `--non-interactive`, `--dry-run`, `--render-dir DIR` (with `--dry-run`: rendered configs without
 secrets).
@@ -119,15 +119,18 @@ certificates and private roots do not work. A Cloudflare Origin Certificate work
 | `cloudflare-origin` | Origin Certificate from the Cloudflare dashboard | `msg...` proxied |
 | `custom` | your paid PEM | A -> server IP |
 
-**The TURN host must be DNS-only** (grey cloud): Cloudflare does not proxy UDP/STUN. Create an A record
-`turn.<domain>` -> server IP. The `turns:` certificate is issued separately (Let's Encrypt); if it cannot be
-issued, plain `turn:` on 3478 remains.
+**The calls name (STUN/TURN) must be DNS-only** (grey cloud): Cloudflare does not proxy UDP/STUN. Behind Cloudflare
+(`cloudflare-*` modes) it is a separate A record `turn.<domain>` -> server IP. Without Cloudflare (`letsencrypt`, `custom` with
+the domain pointing straight at the server) the installer uses the site name when `turn.<domain>` does not point at the server,
+so one record is enough; `--turn-host` sets your own name. When `turn.<domain>` points at the server the installer prefers it
+and issues a separate Let's Encrypt certificate for `turns:` (TLS on 5349); an Origin Certificate is not used for `turns:`. Calls via
+the site name run without `turns:` - coturn does not get the site's private key; `turn:` on 3478 (UDP and TCP) works. Need `turns:`?
+Create `turn.<domain>` and run the installer again. If no certificate can be issued, plain `turn:` on 3478 remains as well.
 
-Without this record the site, sign-in and messages work, but calls do not connect: the apps and browsers take both STUN and
-TURN from `turn.<domain>` (`ICE_SERVERS_JSON`, `TURN_URLS` in the env). The installer does not ask for the name (default
-`turn.<domain>`, another one via `--turn-host`); it shows it in the plan and checks DNS after you confirm: a missing record is a
-warning and the installation continues. Calls start working once the record appears; re-running the same command enables `turns:`.
-Check with `selftest.sh`.
+Without the calls record the site, sign-in and messages work, but calls do not connect: the apps and browsers take both STUN and
+TURN from this name (`ICE_SERVERS_JSON`, `TURN_URLS` in the env). The installer checks DNS before "Continue?": if the record does
+not point at the server, the dialog waits (Enter re-checks, `n` continues without calls); without the dialog it warns and reminds
+you at the end. Calls start working once the record appears; re-running the same command enables `turns:`. Check with `selftest.sh`.
 
 Cloudflare checklist (`cloudflare-*` modes): site record proxied, `turn...` DNS only; SSL/TLS **Full (strict)**;
 **WebSockets On**; Cache Rule **Bypass** for `/api/*`; **TLS 1.3 On** (iOS and macOS require it); restrict
