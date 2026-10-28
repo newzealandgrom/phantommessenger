@@ -30,7 +30,7 @@ Russian version: [README.md](README.md)
 | OS | Ubuntu 22.04, 24.04 or 26.04 LTS. The relay needs Python ≥ 3.11: 24.04 (3.12) and 26.04 (3.14) use the system one; Ubuntu 22.04 is experimental: system Python 3.10 is too old, so the installer adds Python 3.12 from the deadsnakes PPA (key verified by its full fingerprint, dedicated `Signed-By` keyring, apt pinning: only `python3.12*` is taken from the PPA; `uninstall.sh` removes the PPA; opt out with `--no-python-ppa` and install Python ≥ 3.11 yourself). Verified on a live system: 26.04 only; 22.04 and 24.04 not yet. Debian 12 is untested. |
 | Resources | 1 vCPU, >= 1 GB RAM (2 GB better), 10 GB disk. amd64 primary, arm64 best effort. |
 | Host | a dedicated VPS: the installer takes ports 80/443 (nginx) and 3478/5349 (coturn) |
-| Domain | a subdomain such as `msg.example.com` (a subdomain is recommended: the server's HSTS covers nested names) and `turn.msg.example.com` for TURN |
+| Domain | a subdomain such as `msg.example.com` (a subdomain is recommended: the server's HSTS covers nested names) and a second A record `turn.msg.example.com` for calls (STUN/TURN, DNS only): without it calls do not connect, see "TLS modes and DNS" |
 | Ports | 80/tcp, 443/tcp, 3478/tcp+udp, 5349/tcp, 49152-65535/udp - also open them at your VPS provider |
 | Key | none needed: the installer registers the server with the numbers service itself (see "Numbers service key"); port 443 must be reachable from the internet |
 
@@ -122,6 +122,12 @@ certificates and private roots do not work. A Cloudflare Origin Certificate work
 **The TURN host must be DNS-only** (grey cloud): Cloudflare does not proxy UDP/STUN. Create an A record
 `turn.<domain>` -> server IP. The `turns:` certificate is issued separately (Let's Encrypt); if it cannot be
 issued, plain `turn:` on 3478 remains.
+
+Without this record the site, sign-in and messages work, but calls do not connect: the apps and browsers take both STUN and
+TURN from `turn.<domain>` (`ICE_SERVERS_JSON`, `TURN_URLS` in the env). The installer does not ask for the name (default
+`turn.<domain>`, another one via `--turn-host`); it shows it in the plan and checks DNS after you confirm: a missing record is a
+warning and the installation continues. Calls start working once the record appears; re-running the same command enables `turns:`.
+Check with `selftest.sh`.
 
 Cloudflare checklist (`cloudflare-*` modes): site record proxied, `turn...` DNS only; SSL/TLS **Full (strict)**;
 **WebSockets On**; Cache Rule **Bypass** for `/api/*`; **TLS 1.3 On** (iOS and macOS require it); restrict
